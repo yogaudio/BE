@@ -1,0 +1,82 @@
+<!-- yogaudio app login: paste this whole block into an Embed element on the Webflow page /app-login.
+     Setup steps for Elliott: login-page/README.md. Plain HTML and JS, no build step.
+     Memberstack's script must already be installed site-wide (it is on yogaudio.com). -->
+<p id="app-login-msg" role="status"></p>
+
+<script>
+// ---- 1. The one setting to change: where the yogaudio-api Worker lives (set in Task 10). ----
+window.YOGAUDIO_CODE_URL = "https://API_HOST_SET_IN_TASK_10/auth/code";
+</script>
+
+<script id="token-source">
+// ---- 2. Token source: the only Memberstack-specific part. ----
+// verify in Task 10: https://developers.memberstack.com/dom-package/get-current-member
+//   (getCurrentMember -> { data: member | null }), onAuthChange(callback(member|null)), and
+//   getMemberCookie() -> string | null (the member token). Docs: https://developers.memberstack.com/llms-full.txt
+//   On Webflow sites the DOM package is exposed as window.$memberstackDom. Confirm that name on the live site.
+window.YOGAUDIO_TOKEN_SOURCE = {
+  // Resolves to the member token if someone is already logged in on the site, else null.
+  async getToken() {
+    const ms = window.$memberstackDom;
+    const { data: member } = await ms.getCurrentMember();
+    return member ? ms.getMemberCookie() : null;
+  },
+  // Calls cb(token) once a login succeeds on this page.
+  onLogin(cb) {
+    const ms = window.$memberstackDom;
+    ms.onAuthChange((member) => { if (member) cb(ms.getMemberCookie()); });
+  },
+};
+</script>
+
+<script id="handoff">
+// ---- 3. Handoff: shared with the local fake server, do not fork. ----
+(function () {
+  const CALLBACK = "yogaudio://auth"; // constant: never taken from the URL
+  const msg = document.getElementById("app-login-msg");
+  const q = new URLSearchParams(location.search);
+  const state = q.get("state") || "";
+  const challenge = q.get("code_challenge") || "";
+  const formEls = () => document.querySelectorAll("[data-app-login-form]");
+  const showForm = (on) => formEls().forEach((el) => { el.style.display = on ? "" : "none"; });
+  const go = (params) => { location.href = CALLBACK + "?" + params.toString(); };
+
+  // Missing or malformed state/challenge: plain message, no redirect (state can't be trusted).
+  if (!/^[A-Za-z0-9._~-]{16,128}$/.test(state) || !/^[A-Za-z0-9_-]{43}$/.test(challenge)) {
+    showForm(false);
+    msg.textContent = "This sign-in link is not valid. Please go back to the app and try again.";
+    return;
+  }
+
+  let done = false;
+  async function handoff(token) {
+    if (done) return;
+    done = true;
+    showForm(false);
+    msg.textContent = "Signing you in…";
+    const fail = (reason) => go(new URLSearchParams({ error: reason, state }));
+    if (!token) return fail("no_token");
+    try {
+      const r = await fetch(window.YOGAUDIO_CODE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ memberstackToken: token, codeChallenge: challenge, state }),
+      });
+      if (!r.ok) return fail("exchange_failed");
+      const { code } = await r.json();
+      if (typeof code !== "string" || !code) return fail("exchange_failed");
+      go(new URLSearchParams({ code, state }));
+    } catch (e) {
+      fail("exchange_failed");
+    }
+  }
+
+  const src = window.YOGAUDIO_TOKEN_SOURCE;
+  showForm(false);
+  src.getToken().then((token) => {
+    if (token) return handoff(token);
+    showForm(true); // not logged in: show the site's own Memberstack login form
+    src.onLogin(handoff);
+  }).catch(() => { showForm(true); src.onLogin(handoff); });
+})();
+</script>

@@ -23,6 +23,10 @@ Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES
 
 Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TRANSISTOR_API_KEY`, `TOKEN_SIGNING_KEY`.
 
+## Login page
+
+`login-page/app-login.html` is the embed for yogaudio.com `/app-login`; steps for Elliott are in `login-page/README.md`. The Worker URL it posts to is the single `window.YOGAUDIO_CODE_URL` line at the top of the embed (placeholder `https://API_HOST_SET_IN_TASK_10/auth/code`, set it in Task 10).
+
 ## Tests
 
 ```

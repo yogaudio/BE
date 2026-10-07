@@ -34,29 +34,21 @@ async function applyFault(service, url, req, res) {
   return false;
 }
 
+// The fake page runs the real embed's handoff script (login-page/app-login.html, one source of truth);
+// only the token source is swapped: the two buttons stand in for Memberstack's login.
+const embed = () => readFileSync(new URL("../login-page/app-login.html", import.meta.url), "utf8");
 const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app login</title>
 <h1>Fake yogaudio.com /app-login</h1>
+<p id="app-login-msg"></p>
+<div data-app-login-form>
 <button data-t="fake-ms-token-active">Sign in as active member</button>
 <button data-t="fake-ms-token-inactive">Sign in as inactive member</button>
-<p id="msg"></p>
-<script>
-const q = new URLSearchParams(location.search);
-// the app supplies these; defaults let you click through by hand
-const state = q.get("state") || "dev-state";
-const codeChallenge = q.get("code_challenge") || "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
-for (const b of document.querySelectorAll("button")) b.onclick = async () => {
-  const msg = document.getElementById("msg");
-  try {
-    const r = await fetch(${JSON.stringify(WORKER_URL)} + "/auth/code", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ memberstackToken: b.dataset.t, codeChallenge, state }),
-    });
-    if (!r.ok) { msg.textContent = "Worker answered " + r.status; return; }
-    const { code } = await r.json();
-    location.href = "yogaudio://auth?code=" + encodeURIComponent(code) + "&state=" + encodeURIComponent(state);
-  } catch (e) { msg.textContent = "Could not reach the worker: " + e.message; }
-};
-</script>`;
+</div>
+<script>window.YOGAUDIO_CODE_URL = ${JSON.stringify(WORKER_URL + "/auth/code")};
+let cb;
+window.YOGAUDIO_TOKEN_SOURCE = { getToken: async () => null, onLogin: (f) => { cb = f; } };
+for (const b of document.querySelectorAll("button")) b.onclick = () => cb(b.dataset.t);</script>
+${embed().match(/<script id="handoff">[\s\S]*?<\/script>/)[0]}`;
 
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
