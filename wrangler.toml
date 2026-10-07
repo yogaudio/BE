@@ -47,7 +47,7 @@ WEBFLOW_API_BASE = "https://api.webflow.com"
 TRANSISTOR_API_BASE = "https://api.transistor.fm"
 WEBFLOW_COLLECTION_ID = "SET_IN_TASK_10"
 # verify in Task 10: real field slugs and the category collection id
-WF_CATEGORY_COLLECTION_ID = "fake-categories"
+WF_CATEGORY_COLLECTION_ID = "SET_IN_TASK_10"
 WF_FIELD_TITLE = "name"
 WF_FIELD_DURATION = "duration"
 WF_FIELD_CATEGORY = "category"
