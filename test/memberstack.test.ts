@@ -1,6 +1,6 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getMembership } from "../src/memberstack";
+import { getMembership, verifyMemberToken } from "../src/memberstack";
 import { IDS, mockMemberstack } from "./helpers";
 
 const ctx = () => createExecutionContext();
@@ -33,12 +33,12 @@ describe("getMembership", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("a deleted member (404) is inactive and cached", async () => {
+  it("a deleted member (404) is inactive, and an inactive entry is always re-asked", async () => {
     const calls: string[] = [];
     mockMemberstack({ calls });
     expect(await getMembership(env, ctx(), "mem_deleted")).toEqual({ active: false, stale: false, email: "" });
     await getMembership(env, ctx(), "mem_deleted");
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(2);
     await env.CACHE.delete("ms:mem_deleted");
   });
 
@@ -60,6 +60,20 @@ describe("getMembership", () => {
       await expect(getMembership(env, ctx(), IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
     });
 
+    it("a fresh inactive entry is rechecked, so a renewal unlocks at once", async () => {
+      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "active@example.test", at: Date.now() - 60_000 }));
+      const calls: string[] = [];
+      mockMemberstack({ calls });
+      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: false, email: "active@example.test" });
+      expect(calls).toHaveLength(1);
+    });
+
+    it("a fresh inactive entry is the stale fallback when Memberstack is down", async () => {
+      await env.CACHE.put(`ms:${IDS.inactive}`, JSON.stringify({ active: false, email: "x@example.test", at: Date.now() - 60_000 }));
+      mockMemberstack({ down: true });
+      expect(await getMembership(env, ctx(), IDS.inactive)).toEqual({ active: false, stale: true, email: "x@example.test" });
+    });
+
     it("refetches when the entry is older than 10 min and Memberstack is up", async () => {
       await seed(11 * 60_000);
       const calls: string[] = [];
@@ -67,5 +81,19 @@ describe("getMembership", () => {
       expect((await getMembership(env, ctx(), IDS.active)).stale).toBe(false);
       expect(calls).toHaveLength(1);
     });
+  });
+});
+
+describe("verifyMemberToken", () => {
+  it("logs the Memberstack status (never the token) on 401/403/429 and still answers invalid_token", async () => {
+    for (const status of [401, 403, 429]) {
+      vi.restoreAllMocks();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({}, { status }));
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      await expect(verifyMemberToken(env, "secret-member-token")).rejects.toMatchObject({ status: 401, code: "invalid_token" });
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0])).toContain(String(status));
+      expect(String(warn.mock.calls[0])).not.toContain("secret-member-token");
+    }
   });
 });

@@ -24,7 +24,11 @@ export async function verifyMemberToken(env: Env, token: string): Promise<string
     { method: "POST", headers: headers(env), body: JSON.stringify({ token }) },
     TIMEOUT_MS,
   );
-  if (res.status >= 400) throw new ApiError(401, "invalid_token");
+  if (res.status >= 400) {
+    // Status only, never the token: a wrong MEMBERSTACK_SECRET_KEY shows up here as a run of 401/403s.
+    if ([401, 403, 429].includes(res.status)) console.warn("memberstack verify-token: status", res.status);
+    throw new ApiError(401, "invalid_token");
+  }
   const id = ((await res.json().catch(() => null)) as { data?: { id?: unknown } } | null)?.data?.id;
   if (typeof id !== "string" || !id) throw new ApiError(401, "invalid_token");
   return id;
@@ -50,7 +54,8 @@ export async function getMembership(env: Env, _ctx: ExecutionContext, memberId: 
   const k = `ms:${memberId}`;
   const cached = await env.CACHE.get<Cached>(k, "json").catch(() => null);
   const age = cached ? Date.now() - cached.at : Infinity;
-  if (cached && age < FRESH_MS) return { active: cached.active, stale: false, email: cached.email };
+  // Only a fresh ACTIVE entry skips Memberstack: an inactive one is always re-asked, so a renewal unlocks at once.
+  if (cached?.active && age < FRESH_MS) return { active: cached.active, stale: false, email: cached.email };
   try {
     const fresh = await fetchMembership(env, memberId);
     await env.CACHE.put(k, JSON.stringify(fresh), { expirationTtl: STALE_MS / 1000 }).catch(() => {});
