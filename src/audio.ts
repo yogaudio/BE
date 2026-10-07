@@ -12,6 +12,8 @@ export interface Audio {
 }
 
 const EP_TTL = 24 * 3600;
+const EP_JITTER = 6 * 3600; // +-, so the ep: keys do not all expire on the same day-tick
+const MAX_LOOKUPS = 4; // concurrent Transistor calls: small rate limit, Workers subrequest cap
 const MEDIA_HOST = "media.transistor.fm";
 
 // Where a raw audio field points: a direct media URL (used as is), or an episode id (also taken from a share URL).
@@ -40,12 +42,16 @@ async function lookupEpisode(env: Env, id: string): Promise<Audio | null> {
   const res = await upstreamFetch(`${env.TRANSISTOR_API_BASE}/v1/episodes/${encodeURIComponent(id)}`, {
     headers: { "x-api-key": env.TRANSISTOR_API_KEY, accept: "application/json" },
   });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new ApiError(502, "upstream_unavailable");
+  // Other 4xx (400/403/404/422...) mean this one episode id is bad CMS data: no audio for the item.
+  // 401 (our key is wrong), 408, 429 and anything else non-ok are transient: fail the build, keep the stale cache.
+  if (!res.ok) {
+    if (res.status >= 400 && res.status < 500 && ![401, 408, 429].includes(res.status)) return null;
+    throw new ApiError(502, "upstream_unavailable");
+  }
   const a = ((await res.json().catch(() => null)) as { data?: { attributes?: { media_url?: unknown; duration?: unknown } } } | null)?.data?.attributes;
   if (typeof a?.media_url !== "string" || !a.media_url.startsWith("https://")) return null;
   const audio: Audio = { url: a.media_url, durationSec: typeof a.duration === "number" && a.duration > 0 ? Math.round(a.duration) : null };
-  await env.CACHE.put(key, JSON.stringify(audio), { expirationTtl: EP_TTL }).catch(() => {});
+  await env.CACHE.put(key, JSON.stringify(audio), { expirationTtl: Math.round(EP_TTL + (Math.random() * 2 - 1) * EP_JITTER) }).catch(() => {});
   return audio;
 }
 
@@ -54,20 +60,28 @@ async function lookupEpisode(env: Env, id: string): Promise<Audio | null> {
 // silently losing classes until the next rebuild.
 export async function buildAudioIndex(env: Env, items: WebflowItem[]): Promise<Map<string, Audio>> {
   const out = new Map<string, Audio>();
-  await Promise.all(
-    items.map(async (i) => {
+  const queue = [...items];
+  const worker = async () => {
+    for (let i = queue.shift(); i; i = queue.shift()) {
       const ref = parseRef(i.audio);
       const audio = !ref ? null : "url" in ref ? { url: ref.url, durationSec: null } : await lookupEpisode(env, ref.episodeId);
       if (audio) out.set(i.id, audio);
-    }),
-  );
+      else if (ref) console.warn("audio: no usable audio for item", i.id);
+    }
+  };
+  await Promise.all(Array.from({ length: MAX_LOOKUPS }, worker)); // tiny pool; a rejection fails the build
   return out;
 }
 
 export async function getPlay(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const memberId = await verifyAccessToken(env, request.headers.get("Authorization"));
   if (!(await getMembership(env, ctx, memberId)).active) throw new ApiError(403, "membership_inactive");
-  const classId = decodeURIComponent(new URL(request.url).pathname.split("/")[2] ?? "");
+  let classId: string;
+  try {
+    classId = decodeURIComponent(new URL(request.url).pathname.split("/")[2] ?? "");
+  } catch {
+    throw new ApiError(404, "not_found"); // malformed %-escape
+  }
   const index = (await getCatalogEntry(env, ctx)).audio ?? {}; // ?? for entries cached before the index existed
   const audio = Object.hasOwn(index, classId) ? index[classId] : undefined;
   if (!audio) throw new ApiError(404, "not_found");

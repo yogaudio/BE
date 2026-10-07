@@ -127,6 +127,72 @@ describe("GET /play/:classId", () => {
   });
 });
 
+const epItems = (ids: string[]) => ids.map((id) => ({ id: `c_${id}`, isDraft: false, isArchived: false, fieldData: { name: id, slug: id, audio: id } }));
+
+describe("Transistor failure classes", () => {
+  const cols = (ids: string[]) => ({ "fake-collection": [...epItems(ids), ...epItems(["ep_fake_1"])], "fake-categories": [] });
+  for (const status of [400, 403, 422]) {
+    it(`Transistor ${status} for one item drops only that item; the build succeeds`, async () => {
+      const real = mockAll({ collections: cols(["bad"]) }).getMockImplementation()!;
+      vi.spyOn(globalThis, "fetch").mockImplementation((i, init) =>
+        String(i).endsWith("/episodes/bad") ? Promise.resolve(Response.json({}, { status })) : real(i, init));
+      expect((await play("c_bad")).status).toBe(404);
+      expect((await play("c_ep_fake_1")).status).toBe(200);
+    });
+  }
+
+  it("Transistor 429 and 401 are transient: build fails 502, stale kept", async () => {
+    for (const status of [429, 401]) {
+      await env.CACHE.delete("catalog:v1");
+      mockAll({ transistorStatus: status });
+      expect((await play("wf_good_1")).status, String(status)).toBe(502);
+    }
+    vi.restoreAllMocks();
+    mockAll();
+    expect((await play("wf_transistor_id")).status).toBe(200);
+    const cached = (await env.CACHE.get("catalog:v1", "json")) as any;
+    const staleAt = Date.now() - 11 * 60_000;
+    await env.CACHE.put("catalog:v1", JSON.stringify({ ...cached, builtAt: staleAt }));
+    await env.CACHE.delete("ep:ep_fake_1");
+    vi.restoreAllMocks();
+    mockAll({ transistorStatus: 429 });
+    expect((await play("wf_transistor_id")).status).toBe(200);
+    expect(((await env.CACHE.get("catalog:v1", "json")) as any).builtAt).toBe(staleAt);
+  });
+
+  it("at most 4 Transistor lookups are in flight at once", async () => {
+    const ids = Array.from({ length: 14 }, (_, n) => `ep_x${n}`);
+    const real = mockAll({ collections: cols(ids) }).getMockImplementation()!;
+    let now = 0, peak = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (i, init) => {
+      if (!String(i).includes("/transistor/")) return real(i, init);
+      peak = Math.max(peak, ++now);
+      await new Promise((r) => setTimeout(r, 5));
+      now--;
+      return real(i, init);
+    });
+    expect((await play("c_ep_fake_1")).status).toBe(200);
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(4);
+  });
+
+  it("an ep: entry's TTL is jittered around 24 h", async () => {
+    mockAll();
+    const put = vi.spyOn(env.CACHE, "put");
+    await play("wf_transistor_id");
+    const ttl = (put.mock.calls.find((c) => c[0] === "ep:ep_fake_1")![2] as any).expirationTtl;
+    expect(ttl).toBeGreaterThanOrEqual(18 * 3600);
+    expect(ttl).toBeLessThanOrEqual(30 * 3600);
+  });
+
+  it("a malformed class id is 404 not_found, not 500", async () => {
+    mockAll();
+    const res = await play("%E0%A4");
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_found" });
+  });
+});
+
 describe("/catalog and audio", () => {
   it("a class with an empty audio field is absent from /catalog; the other classes stay", async () => {
     mockAll();
