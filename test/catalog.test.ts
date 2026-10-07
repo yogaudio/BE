@@ -44,9 +44,19 @@ describe("normalizeCatalog", () => {
 
   it("teacher and description are strings or null; shape matches the contract", () => {
     expect(one({ teacher: " Elliott ", description: "<p>Hi</p>" })).toEqual({
-      id: "i1", slug: "s1", title: "T", durationSec: 600, categoryIds: [], teacher: "Elliott", artworkUrl: null, description: "<p>Hi</p>",
+      id: "i1", slug: "s1", title: "T", durationSec: 600, categoryIds: [], teacher: "Elliott", artworkUrl: null, description: "Hi",
     });
     expect(one({ teacher: 5, description: "" })).toMatchObject({ teacher: null, description: null });
+  });
+
+  it("description is plain text: tags stripped, entities decoded, whitespace collapsed", () => {
+    expect(one({ description: "<p>Slow &amp; steady</p>\n<p>a&nbsp;&lt;b&gt; &quot;q&quot; it&#39;s</p>" })?.description).toBe(`Slow & steady a <b> "q" it's`);
+    expect(one({ description: "<p> </p>" })?.description).toBeNull();
+  });
+
+  it("description is null when it mentions transistor.fm", () => {
+    expect(one({ description: '<p>Listen <a href="https://share.transistor.fm/s/abc">here</a></p>' })?.description).toBeNull();
+    expect(one({ description: "see Transistor.FM/xyz" })?.description).toBeNull();
   });
 
   it("audioIndex absent drops nothing; the output never carries audio", () => {

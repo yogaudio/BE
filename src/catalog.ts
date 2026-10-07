@@ -36,6 +36,17 @@ function parseDuration(v: unknown): number | null {
   return total > 0 ? total : null;
 }
 
+// Rich-text HTML to plain text. A description that leaks a Transistor link is dropped entirely.
+function plainText(v: unknown): string | null {
+  if (typeof v !== "string" || /transistor\.fm/i.test(v)) return null; // checked on the raw HTML, so an href counts too
+  const t = text(
+    typeof v === "string"
+      ? v.replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", nbsp: " " })[e as string]!).replace(/\s+/g, " ")
+      : null,
+  );
+  return t;
+}
+
 function httpsUrl(v: unknown): string | null {
   const s = text(typeof v === "object" && v !== null ? (v as { url?: unknown }).url : v);
   try {
@@ -65,7 +76,7 @@ export function normalizeCatalog(
       categoryIds: refs.filter((r): r is string => typeof r === "string" && known.has(r)),
       teacher: text(i.teacher),
       artworkUrl: httpsUrl(i.image),
-      description: text(i.description),
+      description: plainText(i.description),
     }];
   });
   return { classes, categories };
