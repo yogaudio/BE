@@ -1,5 +1,7 @@
 import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { ApiError } from "../src/errors";
+import { routes } from "../src/index";
 
 describe("router", () => {
   it("GET /health returns 200", async () => {
@@ -41,5 +43,18 @@ describe("router", () => {
   it("other routes send no CORS headers", async () => {
     const res = await SELF.fetch("https://api.test/health", { headers: { Origin: "http://localhost:8788" } });
     expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+});
+
+describe("error mapping", () => {
+  it("ApiError maps to its status and code; anything else to 500 internal", async () => {
+    routes["GET /boom-api"] = () => { throw new ApiError(403, "membership_inactive"); };
+    routes["GET /boom-bug"] = () => { throw new Error("secret detail"); };
+    const a = await SELF.fetch("https://api.test/boom-api");
+    expect(a.status).toBe(403);
+    expect(await a.json()).toEqual({ error: "membership_inactive" });
+    const b = await SELF.fetch("https://api.test/boom-bug");
+    expect(b.status).toBe(500);
+    expect(await b.text()).toBe('{"error":"internal"}');
   });
 });

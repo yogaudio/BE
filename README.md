@@ -19,7 +19,7 @@ Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request
 
 ## Config
 
-Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `TRANSISTOR_API_BASE`, `WEBFLOW_COLLECTION_ID`. Committed values target the fakes. Production: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`, `https://api.transistor.fm`, and the real collection id. The D1 and KV ids in `wrangler.toml` are placeholders.
+Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `TRANSISTOR_API_BASE`, `WEBFLOW_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`, `https://api.transistor.fm`. The production collection id and the production D1/KV ids are `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
 
 Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TRANSISTOR_API_KEY`, `TOKEN_SIGNING_KEY`.
 
@@ -29,3 +29,14 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 npm test            # vitest in the Workers pool
 npm run typecheck   # tsc --noEmit, strict
 ```
+
+## Deploy
+
+```
+wrangler d1 migrations apply DB --remote --env production
+wrangler deploy --env production
+```
+
+Set the four secrets first with `wrangler secret put <NAME> --env production`. A plain `wrangler deploy` would ship the local-dev (localhost) config, so always pass `--env production`. Every upstream call goes through `upstreamFetch` (`src/upstream.ts`), which turns timeouts, network errors and upstream 5xx into 502 `upstream_unavailable`.
+
+`npm test` needs no `.dev.vars`: fake secrets and D1 migrations are set up in `vitest.config.ts`.

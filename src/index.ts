@@ -1,13 +1,12 @@
 import type { Env } from "./env";
 import { ApiError, jsonError } from "./errors";
 
-export { ApiError } from "./errors";
 export type { Env } from "./env";
 
 type Handler = (request: Request, env: Env, ctx: ExecutionContext) => Promise<Response> | Response;
 
 // Later tasks register their handlers here, keyed by "METHOD /path".
-const routes: Record<string, Handler> = {
+export const routes: Record<string, Handler> = {
   "GET /health": () => new Response("ok"),
 };
 
