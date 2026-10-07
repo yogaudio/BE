@@ -37,6 +37,6 @@ wrangler d1 migrations apply DB --remote --env production
 wrangler deploy --env production
 ```
 
-Set the four secrets first with `wrangler secret put <NAME> --env production`. A plain `wrangler deploy` would ship the local-dev (localhost) config, so always pass `--env production`. Every upstream call goes through `upstreamFetch` (`src/upstream.ts`), which turns timeouts, network errors and upstream 5xx into 502 `upstream_unavailable`.
+Set the four secrets first with `wrangler secret put <NAME> --env production`. A plain `wrangler deploy` would ship the local-dev (localhost) config, so always pass `--env production`. The top-level worker is named `yogaudio-api-dev`, so a plain deploy can never overwrite the production worker `yogaudio-api`. Every upstream call goes through `upstreamFetch` (`src/upstream.ts`), which turns timeouts, network errors and upstream 5xx into 502 `upstream_unavailable`.
 
 `npm test` needs no `.dev.vars`: fake secrets and D1 migrations are set up in `vitest.config.ts`.
