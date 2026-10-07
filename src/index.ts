@@ -1,5 +1,6 @@
 import type { Env } from "./env";
 import { ApiError, jsonError } from "./errors";
+import { authCode, authExchange, authLogout, authRefresh } from "./auth";
 
 export type { Env } from "./env";
 
@@ -8,6 +9,10 @@ type Handler = (request: Request, env: Env, ctx: ExecutionContext) => Promise<Re
 // Later tasks register their handlers here, keyed by "METHOD /path".
 export const routes: Record<string, Handler> = {
   "GET /health": () => new Response("ok"),
+  "POST /auth/code": authCode,
+  "POST /auth/exchange": authExchange,
+  "POST /auth/refresh": authRefresh,
+  "POST /auth/logout": authLogout,
 };
 
 // CORS is for the login page's POST /auth/code only; every other route sends none.
