@@ -39,12 +39,20 @@ function parseDuration(v: unknown): number | null {
   return total > 0 ? total : null;
 }
 
+const NAMED: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", nbsp: " " };
+// One pass, so "&amp;#8217;" stays "&#8217;". An out-of-range code point is left as written.
+function decodeEntity(all: string, named?: string, dec?: string, hex?: string): string {
+  if (named) return NAMED[named]!;
+  const cp = dec ? Number(dec) : parseInt(hex!, 16);
+  return cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : all;
+}
+
 // Rich-text HTML to plain text. A description that leaks a Transistor link is dropped entirely.
 function plainText(v: unknown): string | null {
   if (typeof v !== "string" || /transistor\.fm/i.test(v)) return null; // checked on the raw HTML, so an href counts too
   const t = text(
     typeof v === "string"
-      ? v.replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", nbsp: " " })[e as string]!).replace(/\s+/g, " ")
+      ? v.replace(/<[^>]*>/g, " ").replace(/&(?:(amp|lt|gt|quot|#39|nbsp)|#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6}));/g, decodeEntity).replace(/\s+/g, " ")
       : null,
   );
   return t;

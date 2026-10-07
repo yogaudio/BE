@@ -54,6 +54,10 @@ describe("normalizeCatalog", () => {
     expect(one({ description: "<p> </p>" })?.description).toBeNull();
   });
 
+  it("description decodes numeric entities, decimal and hex, in one pass", () => {
+    expect(one({ description: "<p>Elliott&#8217;s class &#x2014; calm&#X2019;s &amp;#8217;</p>" })?.description).toBe("Elliott\u2019s class \u2014 calm\u2019s &#8217;");
+  });
+
   it("description is null when it mentions transistor.fm", () => {
     expect(one({ description: '<p>Listen <a href="https://share.transistor.fm/s/abc">here</a></p>' })?.description).toBeNull();
     expect(one({ description: "see Transistor.FM/xyz" })?.description).toBeNull();
