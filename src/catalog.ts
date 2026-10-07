@@ -1,3 +1,4 @@
+import { buildAudioIndex, type Audio } from "./audio";
 import type { Env } from "./env";
 import { ApiError } from "./errors";
 import { sha256, verifyAccessToken } from "./tokens";
@@ -21,7 +22,9 @@ export interface CatalogBody {
   categories: WebflowCategory[];
 }
 export type Catalog = CatalogBody & { version: string };
-type Entry = { version: string; builtAt: number; json: string };
+// `audio` is the server-side classId -> audio index. It lives only in this KV entry, next to the catalog it was
+// built with; only `json` is ever served by /catalog. /play reads `audio`.
+type Entry = { version: string; builtAt: number; json: string; audio: Record<string, Audio> };
 
 const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -56,11 +59,11 @@ function httpsUrl(v: unknown): string | null {
   }
 }
 
-// Pure. `audioIndex` (Task 4): item ids that have playable audio; when given, other items are dropped.
-// Without it nothing is dropped for missing audio. The raw audio field never reaches the output.
+// Pure. `audioIndex`: when given, classes absent from it are dropped and a missing duration is filled from it.
+// Without it nothing is dropped for missing audio. Audio never reaches the output.
 export function normalizeCatalog(
   items: WebflowItem[],
-  audioIndex?: ReadonlySet<string>,
+  audioIndex?: ReadonlyMap<string, Audio>,
   categories: WebflowCategory[] = [],
 ): CatalogBody {
   const known = new Set(categories.map((c) => c.id));
@@ -72,7 +75,7 @@ export function normalizeCatalog(
       id: i.id,
       slug: i.slug,
       title,
-      durationSec: parseDuration(i.duration),
+      durationSec: parseDuration(i.duration) ?? audioIndex?.get(i.id)?.durationSec ?? null,
       categoryIds: refs.filter((r): r is string => typeof r === "string" && known.has(r)),
       teacher: text(i.teacher),
       artworkUrl: httpsUrl(i.image),
@@ -84,9 +87,12 @@ export function normalizeCatalog(
 
 async function rebuild(env: Env): Promise<Entry> {
   const [items, categories] = await Promise.all([loadWebflowItems(env), loadWebflowCategories(env)]);
-  const body = normalizeCatalog(items, undefined, categories);
+  const index = await buildAudioIndex(env, items); // throws on a Transistor outage: the stale cache stays
+  const body = normalizeCatalog(items, index, categories);
   const version = (await sha256(JSON.stringify(body))).slice(0, 16);
-  const entry: Entry = { version, builtAt: Date.now(), json: JSON.stringify({ version, ...body }) };
+  const entry: Entry = { version, builtAt: Date.now(), json: JSON.stringify({ version, ...body }),
+    audio: Object.fromEntries(body.classes.map((c) => [c.id, index.get(c.id)!])),
+  };
   await env.CACHE.put(KEY, JSON.stringify(entry)).catch(() => {});
   return entry;
 }
@@ -97,19 +103,22 @@ const etagMatches = (header: string | null, version: string) =>
     return v === version || t.trim() === "*";
   });
 
-export async function getCatalog(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-  await verifyAccessToken(env, request.headers.get("Authorization"));
+// The cached entry (building it when empty). Stale entries are served while a rebuild runs via waitUntil.
+export async function getCatalogEntry(env: Env, ctx: ExecutionContext): Promise<Entry> {
   const cached = await env.CACHE.get<Entry>(KEY, "json").catch(() => null);
-  let entry: Entry;
   if (cached) {
-    entry = cached;
     // stale-while-revalidate; concurrent rebuilds are harmless (last write wins)
     if (Date.now() - cached.builtAt >= FRESH_MS) {
       ctx.waitUntil(rebuild(env).catch((e) => console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown")));
     }
-  } else {
-    entry = await rebuild(env);
+    return cached;
   }
+  return rebuild(env);
+}
+
+export async function getCatalog(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  await verifyAccessToken(env, request.headers.get("Authorization"));
+  const entry = await getCatalogEntry(env, ctx);
   const headers = { ETag: `"${entry.version}"`, "Cache-Control": "private, no-cache" };
   if (etagMatches(request.headers.get("If-None-Match"), entry.version)) return new Response(null, { status: 304, headers });
   return new Response(entry.json, { headers: { ...headers, "content-type": "application/json" } });

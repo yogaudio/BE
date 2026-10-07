@@ -105,7 +105,7 @@ describe("GET /catalog", () => {
     expect(body.version).toMatch(/^[A-Za-z0-9_-]{8,}$/);
     expect(body.categories).toHaveLength(3);
     expect(body.classes.map((c: any) => c.id)).toEqual([
-      "wf_good_1", "wf_good_2", "wf_good_3", "wf_transistor_id", "wf_bad_duration", "wf_bad_category", "wf_bad_image", "wf_bad_no_audio",
+      "wf_good_1", "wf_good_2", "wf_good_3", "wf_transistor_id", "wf_bad_duration", "wf_bad_category", "wf_bad_image",
     ]);
     expect(body.classes[0]).toEqual({
       id: "wf_good_1", slug: "sample-class-1", title: "Sample class 1", durationSec: 1629, categoryIds: ["cat_gentle"],
