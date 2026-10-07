@@ -14,15 +14,26 @@ window.YOGAUDIO_CODE_URL = "https://API_HOST_SET_IN_TASK_10/auth/code";
 //   (getCurrentMember -> { data: member | null }), onAuthChange(callback(member|null)), and
 //   getMemberCookie() -> string | null (the member token). Docs: https://developers.memberstack.com/llms-full.txt
 //   On Webflow sites the DOM package is exposed as window.$memberstackDom. Confirm that name on the live site.
+// Waits up to ~5 s (polling every 100 ms, from DOMContentLoaded) for the Memberstack global; null if absent.
+const msReady = new Promise((resolve) => {
+  const start = () => {
+    let tries = 0;
+    const t = setInterval(() => {
+      if (window.$memberstackDom || ++tries >= 50) { clearInterval(t); resolve(window.$memberstackDom || null); }
+    }, 100);
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+});
 window.YOGAUDIO_TOKEN_SOURCE = {
-  // Resolves to the member token if someone is already logged in on the site, else null.
+  // Resolves to the member token if someone is already logged in on the site, else null. Rejects if Memberstack never loads.
   async getToken() {
-    const ms = window.$memberstackDom;
+    const ms = await msReady;
+    if (!ms) throw new Error("memberstack missing");
     const { data: member } = await ms.getCurrentMember();
     return member ? ms.getMemberCookie() : null;
   },
   // Calls cb(token) once a login succeeds on this page.
-  onLogin(cb) {
+  onLogin(cb) { // only called after getToken() resolved, so the global exists
     const ms = window.$memberstackDom;
     ms.onAuthChange((member) => { if (member) cb(ms.getMemberCookie()); });
   },
@@ -48,13 +59,13 @@ window.YOGAUDIO_TOKEN_SOURCE = {
     return;
   }
 
+  const fail = (reason) => go(new URLSearchParams({ error: reason, state }));
   let done = false;
   async function handoff(token) {
     if (done) return;
     done = true;
     showForm(false);
     msg.textContent = "Signing you in…";
-    const fail = (reason) => go(new URLSearchParams({ error: reason, state }));
     if (!token) return fail("no_token");
     try {
       const r = await fetch(window.YOGAUDIO_CODE_URL, {
@@ -76,7 +87,7 @@ window.YOGAUDIO_TOKEN_SOURCE = {
   src.getToken().then((token) => {
     if (token) return handoff(token);
     showForm(true); // not logged in: show the site's own Memberstack login form
-    src.onLogin(handoff);
-  }).catch(() => { showForm(true); src.onLogin(handoff); });
+    try { src.onLogin(handoff); } catch (e) { done = true; showForm(false); fail("login_unavailable"); }
+  }).catch(() => { done = true; showForm(false); fail("login_unavailable"); });
 })();
 </script>

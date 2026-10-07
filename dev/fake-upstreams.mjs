@@ -37,6 +37,11 @@ async function applyFault(service, url, req, res) {
 // The fake page runs the real embed's handoff script (login-page/app-login.html, one source of truth);
 // only the token source is swapped: the two buttons stand in for Memberstack's login.
 const embed = () => readFileSync(new URL("../login-page/app-login.html", import.meta.url), "utf8");
+const handoffScript = () => {
+  const m = embed().match(/<script id="handoff">[\s\S]*?<\/script>/);
+  if (!m) throw new Error('login-page/app-login.html has no <script id="handoff"> block; the fake /app-login needs it');
+  return m[0];
+};
 const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app login</title>
 <h1>Fake yogaudio.com /app-login</h1>
 <p id="app-login-msg"></p>
@@ -48,7 +53,7 @@ const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app lo
 let cb;
 window.YOGAUDIO_TOKEN_SOURCE = { getToken: async () => null, onLogin: (f) => { cb = f; } };
 for (const b of document.querySelectorAll("button")) b.onclick = () => cb(b.dataset.t);</script>
-${embed().match(/<script id="handoff">[\s\S]*?<\/script>/)[0]}`;
+${handoffScript()}`;
 
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
