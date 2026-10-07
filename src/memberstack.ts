@@ -34,6 +34,7 @@ export async function verifyMemberToken(env: Env, token: string): Promise<string
 // verify in Task 10: the planConnections / status / auth.email paths, no real member seen yet.
 async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
+  if (res.status === 404) return { active: false, email: "", at: Date.now() }; // member deleted
   if (!res.ok) throw new ApiError(502, "upstream_unavailable");
   const m = ((await res.json().catch(() => null)) as { data?: any } | null)?.data;
   if (!m) throw new ApiError(502, "upstream_unavailable");

@@ -33,6 +33,15 @@ describe("getMembership", () => {
     expect(calls).toHaveLength(1);
   });
 
+  it("a deleted member (404) is inactive and cached", async () => {
+    const calls: string[] = [];
+    mockMemberstack({ calls });
+    expect(await getMembership(env, ctx(), "mem_deleted")).toEqual({ active: false, stale: false, email: "" });
+    await getMembership(env, ctx(), "mem_deleted");
+    expect(calls).toHaveLength(1);
+    await env.CACHE.delete("ms:mem_deleted");
+  });
+
   describe("stale membership fallback", () => {
     const seed = (ageMs: number) =>
       env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "active@example.test", at: Date.now() - ageMs }));
