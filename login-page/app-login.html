@@ -50,7 +50,22 @@ window.YOGAUDIO_TOKEN_SOURCE = {
   const challenge = q.get("code_challenge") || "";
   const formEls = () => document.querySelectorAll("[data-app-login-form]");
   const showForm = (on) => formEls().forEach((el) => { el.style.display = on ? "" : "none"; });
-  const go = (params) => { location.href = CALLBACK + "?" + params.toString(); };
+  // Some in-app browsers (Chrome Custom Tabs) block a script jump to yogaudio:// without a tap, so after 1.5 s
+  // a plain link to the same URL (still built from the constant CALLBACK) lets the member tap through.
+  const go = (params) => {
+    const url = CALLBACK + "?" + params.toString();
+    location.href = url;
+    setTimeout(() => {
+      if (document.getElementById("app-login-return")) return;
+      const a = document.createElement("a");
+      a.id = "app-login-return";
+      a.href = url;
+      a.textContent = "Return to the app";
+      a.style.display = "inline-block";
+      a.style.padding = "12px 0";
+      msg.after(a);
+    }, 1500);
+  };
 
   // Missing or malformed state/challenge: plain message, no redirect (state can't be trusted).
   if (!/^[A-Za-z0-9._~-]{16,128}$/.test(state) || !/^[A-Za-z0-9_-]{43}$/.test(challenge)) {
