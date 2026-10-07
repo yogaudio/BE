@@ -17,7 +17,7 @@ describe("normalizeCatalog", () => {
     expect(one({ duration: 1800 })?.durationSec).toBe(1800);
     expect(one({ duration: "27:09" })?.durationSec).toBe(27 * 60 + 9);
     expect(one({ duration: "1:02:03" })?.durationSec).toBe(3723);
-    for (const bad of ["about half an hour", "", "12:75", "1:2:3:4", -5, NaN, null, undefined, {}, "0:00"]) {
+    for (const bad of ["about half an hour", "", "12:75", "1:2:3:4", -5, NaN, null, undefined, {}, "0:00", 0.4]) {
       expect(one({ duration: bad })?.durationSec, String(bad)).toBeNull();
     }
   });

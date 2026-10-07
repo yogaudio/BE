@@ -27,7 +27,7 @@ const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : nul
 
 // Seconds as a number, "mm:ss" or "hh:mm:ss"; anything else is null.
 function parseDuration(v: unknown): number | null {
-  if (typeof v === "number") return Number.isFinite(v) && v > 0 ? Math.round(v) : null;
+  if (typeof v === "number") return Number.isFinite(v) && Math.round(v) > 0 ? Math.round(v) : null;
   const m = typeof v === "string" ? v.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/) : null;
   if (!m) return null;
   const [h, min, s] = [Number(m[1] ?? 0), Number(m[2]), Number(m[3])];
