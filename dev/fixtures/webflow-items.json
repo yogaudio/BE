@@ -1,0 +1,21 @@
+{
+  "categoryCollection": "fake-categories",
+  "categories": [
+    {"id":"cat_gentle","isDraft":false,"isArchived":false,"fieldData":{"name":"Gentle Flow","slug":"gentle-flow"}},
+    {"id":"cat_evening","isDraft":false,"isArchived":false,"fieldData":{"name":"Evening Wind Down","slug":"evening-wind-down"}},
+    {"id":"cat_morning","isDraft":false,"isArchived":false,"fieldData":{"name":"Morning Energy","slug":"morning-energy"}}
+  ],
+  "items": [
+    {"id":"wf_good_1","isDraft":false,"isArchived":false,"fieldData":{"name":"Sample class 1","slug":"sample-class-1","duration":"27:09","category":["cat_gentle"],"teacher":"Elliott Rader","description":"A slow, steady practice.","image":{"fileId":"img1","url":"https://cdn.example.test/img1.jpg","alt":null},"audio":"https://media.transistor.fm/54b166cd/dfa54a0f.mp3"}},
+    {"id":"wf_good_2","isDraft":false,"isArchived":false,"fieldData":{"name":"Sample class 2","slug":"sample-class-2","duration":"38:46","category":["cat_evening","cat_gentle"],"teacher":"Elliott Rader","audio":"https://media.transistor.fm/73ff9215/bd81dd79.mp3"}},
+    {"id":"wf_good_3","isDraft":false,"isArchived":false,"fieldData":{"name":"Sample class 3","slug":"sample-class-3","duration":1861,"category":["cat_morning"],"audio":"https://media.transistor.fm/5378e91c/683bf766.mp3"}},
+    {"id":"wf_transistor_id","isDraft":false,"isArchived":false,"fieldData":{"name":"Sample class 4 (by episode id)","slug":"sample-class-4","duration":"1:02:03","category":["cat_gentle"],"audio":"ep_fake_1"}},
+    {"id":"wf_bad_draft","isDraft":true,"isArchived":false,"fieldData":{"name":"Draft class","slug":"draft-class","duration":"10:00","category":["cat_gentle"],"audio":"https://media.transistor.fm/54b166cd/dfa54a0f.mp3"}},
+    {"id":"wf_bad_archived","isDraft":false,"isArchived":true,"fieldData":{"name":"Archived class","slug":"archived-class","duration":"10:00","category":["cat_gentle"],"audio":"https://media.transistor.fm/54b166cd/dfa54a0f.mp3"}},
+    {"id":"wf_bad_no_title","isDraft":false,"isArchived":false,"fieldData":{"slug":"no-title","duration":"10:00","category":["cat_gentle"],"audio":"https://media.transistor.fm/54b166cd/dfa54a0f.mp3"}},
+    {"id":"wf_bad_duration","isDraft":false,"isArchived":false,"fieldData":{"name":"Garbage duration class","slug":"garbage-duration","duration":"about half an hour","category":["cat_gentle"],"audio":"https://media.transistor.fm/73ff9215/bd81dd79.mp3"}},
+    {"id":"wf_bad_category","isDraft":false,"isArchived":false,"fieldData":{"name":"Unknown category class","slug":"unknown-category","duration":"12:00","category":["cat_missing"],"audio":"https://media.transistor.fm/5378e91c/683bf766.mp3"}},
+    {"id":"wf_bad_image","isDraft":false,"isArchived":false,"fieldData":{"name":"Insecure image class","slug":"insecure-image","duration":"12:00","category":["cat_gentle"],"image":{"url":"http://cdn.example.test/img.jpg"},"audio":"https://media.transistor.fm/5378e91c/683bf766.mp3"}},
+    {"id":"wf_bad_no_audio","isDraft":false,"isArchived":false,"fieldData":{"name":"No audio class","slug":"no-audio","duration":"12:00","category":["cat_gentle"],"audio":""}}
+  ]
+}

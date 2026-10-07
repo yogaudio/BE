@@ -1,0 +1,22 @@
+{
+  "name": "yogaudio-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler d1 migrations apply DB --local && wrangler dev --port 8787",
+    "fakes": "node dev/fake-upstreams.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20261007.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.148.0"
+  },
+  "dependencies": {
+    "jose": "^6.2.12"
+  }
+}

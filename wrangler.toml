@@ -1,0 +1,67 @@
+name = "yogaudio-api-dev"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Non-secret vars. Local dev points the upstreams at the fake server (dev/fake-upstreams.mjs).
+# Production values live in [env.production] below.
+[vars]
+LOGIN_PAGE_ORIGIN = "http://localhost:8788"
+ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING,PAST_DUE"
+ALLOWED_PLAN_IDS = ""
+MEMBERSTACK_API_BASE = "http://localhost:8788/memberstack"
+WEBFLOW_API_BASE = "http://localhost:8788/webflow"
+TRANSISTOR_API_BASE = "http://localhost:8788/transistor"
+WEBFLOW_COLLECTION_ID = "fake-collection"
+# Webflow field slugs; defaults match dev/fixtures. Real slugs unknown until API access (Q1).
+WF_CATEGORY_COLLECTION_ID = "fake-categories"
+WF_FIELD_TITLE = "name"
+WF_FIELD_DURATION = "duration"
+WF_FIELD_CATEGORY = "category"
+WF_FIELD_TEACHER = "teacher"
+WF_FIELD_IMAGE = "image"
+WF_FIELD_DESCRIPTION = "description"
+WF_FIELD_AUDIO = "audio"
+
+# Local dev only (top level). Production deploys use `wrangler deploy --env production`.
+# Local ids only; the production ones are in [env.production] below.
+[[d1_databases]]
+binding = "DB"
+database_name = "yogaudio-api"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "00000000000000000000000000000000"
+
+# Production. Bindings and vars are NOT inherited from the top level, so everything is repeated here.
+[env.production]
+name = "yogaudio-api"
+
+[env.production.vars]
+LOGIN_PAGE_ORIGIN = "https://www.yogaudio.com"
+ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING,PAST_DUE"
+ALLOWED_PLAN_IDS = ""
+MEMBERSTACK_API_BASE = "https://admin.memberstack.com"
+WEBFLOW_API_BASE = "https://api.webflow.com"
+TRANSISTOR_API_BASE = "https://api.transistor.fm"
+WEBFLOW_COLLECTION_ID = "SET_IN_TASK_10"
+# verify in Task 10: real field slugs and the category collection id
+WF_CATEGORY_COLLECTION_ID = "SET_IN_TASK_10"
+WF_FIELD_TITLE = "name"
+WF_FIELD_DURATION = "duration"
+WF_FIELD_CATEGORY = "category"
+WF_FIELD_TEACHER = "teacher"
+WF_FIELD_IMAGE = "image"
+WF_FIELD_DESCRIPTION = "description"
+WF_FIELD_AUDIO = "audio"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "yogaudio-api"
+database_id = "SET_IN_TASK_10"
+migrations_dir = "migrations"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "SET_IN_TASK_10"
