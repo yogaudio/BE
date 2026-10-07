@@ -1,0 +1,25 @@
+{
+  "categories": ["gentle-flow", "evening-wind-down", "morning-energy"],
+  "items": [
+    { "id": "wf_good_1", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Sample class 1", "slug": "sample-class-1", "duration": "27:09", "category": "gentle-flow", "audio-url": "https://media.transistor.fm/54b166cd/dfa54a0f.mp3" } },
+    { "id": "wf_good_2", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Sample class 2", "slug": "sample-class-2", "duration": "38:46", "category": "evening-wind-down", "audio-url": "https://media.transistor.fm/73ff9215/bd81dd79.mp3" } },
+    { "id": "wf_good_3", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Sample class 3", "slug": "sample-class-3", "duration": "31:01", "category": "morning-energy", "audio-url": "https://media.transistor.fm/5378e91c/683bf766.mp3" } },
+    { "id": "wf_transistor_id", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Sample class 4 (by episode id)", "slug": "sample-class-4", "duration": "27:09", "category": "gentle-flow", "transistor-episode-id": "ep_fake_1" } },
+    { "id": "wf_bad_draft", "isDraft": true, "isArchived": false,
+      "fieldData": { "name": "Draft class", "slug": "draft-class", "duration": "10:00", "category": "gentle-flow", "audio-url": "https://media.transistor.fm/54b166cd/dfa54a0f.mp3" } },
+    { "id": "wf_bad_archived", "isDraft": false, "isArchived": true,
+      "fieldData": { "name": "Archived class", "slug": "archived-class", "duration": "10:00", "category": "gentle-flow", "audio-url": "https://media.transistor.fm/54b166cd/dfa54a0f.mp3" } },
+    { "id": "wf_bad_no_title", "isDraft": false, "isArchived": false,
+      "fieldData": { "slug": "no-title", "duration": "10:00", "category": "gentle-flow", "audio-url": "https://media.transistor.fm/54b166cd/dfa54a0f.mp3" } },
+    { "id": "wf_bad_duration", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Garbage duration class", "slug": "garbage-duration", "duration": "about half an hour", "category": "gentle-flow", "audio-url": "https://media.transistor.fm/73ff9215/bd81dd79.mp3" } },
+    { "id": "wf_bad_category", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "Unknown category class", "slug": "unknown-category", "duration": "12:00", "category": "does-not-exist", "audio-url": "https://media.transistor.fm/5378e91c/683bf766.mp3" } },
+    { "id": "wf_bad_no_audio", "isDraft": false, "isArchived": false,
+      "fieldData": { "name": "No audio class", "slug": "no-audio", "duration": "12:00", "category": "gentle-flow", "audio-url": "" } }
+  ]
+}
