@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { ApiError, jsonError } from "./errors";
 import { authCode, authExchange, authLogout, authRefresh } from "./auth";
+import { getCatalog } from "./catalog";
 
 export type { Env } from "./env";
 
@@ -13,6 +14,7 @@ export const routes: Record<string, Handler> = {
   "POST /auth/exchange": authExchange,
   "POST /auth/refresh": authRefresh,
   "POST /auth/logout": authLogout,
+  "GET /catalog": getCatalog,
 };
 
 // CORS is for the login page's POST /auth/code only; every other route sends none.

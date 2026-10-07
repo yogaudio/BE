@@ -104,13 +104,16 @@ createServer(async (req, res) => {
   if (wf && req.method === "GET") {
     if (await applyFault("webflow", url, req, res)) return;
     if (!auth("webflow", req.headers.authorization === `Bearer ${KEYS.webflow}`)) return;
+    // the item collection and the category collection are separate, as in a real Webflow site
+    const all = { "fake-collection": webflow.items, [webflow.categoryCollection]: webflow.categories }[wf[1]];
+    if (!all) return send(res, 404, { message: "collection not found" });
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 100);
     const offset = Number(url.searchParams.get("offset") ?? 0);
     // note: real "live" listing omits drafts; fixtures keep them so tests exercise the isDraft/isArchived flags
-    const items = webflow.items.slice(offset, offset + limit).map((i) => ({
+    const items = all.slice(offset, offset + limit).map((i) => ({
       cmsLocaleId: "loc_fake", lastPublished: "2026-01-01T00:00:00.000Z", lastUpdated: "2026-01-01T00:00:00.000Z", createdOn: "2026-01-01T00:00:00.000Z", ...i,
     }));
-    return send(res, 200, { items, pagination: { limit, offset, total: webflow.items.length } });
+    return send(res, 200, { items, pagination: { limit, offset, total: all.length } });
   }
 
   // Transistor API v1. https://developers.transistor.fm/#get-/v1/episodes/-id-

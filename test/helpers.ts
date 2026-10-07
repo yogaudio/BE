@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import members from "../dev/fixtures/members.json";
+import webflow from "../dev/fixtures/webflow-items.json";
 
 // Fake Memberstack on top of globalThis.fetch, same shapes as dev/fake-upstreams.mjs.
 export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overrides?: Record<string, unknown> } = {}) {
@@ -19,3 +20,23 @@ export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overri
 }
 
 export const IDS = { active: "mem_fake_active", inactive: "mem_fake_inactive", pastDue: "mem_fake_pastdue" };
+
+// Fake Webflow Data API on top of globalThis.fetch, same shapes as dev/fake-upstreams.mjs.
+// `pageSize` caps items per page (real Webflow caps at 100) so pagination is testable with the small fixture.
+export function mockWebflow(opts: { pageSize?: number; status?: number; calls?: string[]; collections?: Record<string, unknown[]> } = {}) {
+  const calls = opts.calls ?? [];
+  const collections = opts.collections ?? {
+    "fake-collection": webflow.items,
+    [webflow.categoryCollection]: webflow.categories,
+  };
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    calls.push(`${url.pathname}${url.search}`);
+    if (opts.status) return Response.json({ message: "boom" }, { status: opts.status });
+    const all = collections[url.pathname.split("/")[4]];
+    if (!all) return Response.json({ message: "collection not found" }, { status: 404 });
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), opts.pageSize ?? 100);
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    return Response.json({ items: all.slice(offset, offset + limit), pagination: { limit, offset, total: all.length } });
+  });
+}
