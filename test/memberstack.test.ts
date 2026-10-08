@@ -1,7 +1,7 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getMembership, verifyMemberToken } from "../src/memberstack";
-import { IDS, mockMemberstack } from "./helpers";
+import { deleteMember, getMembership, getStripeCustomerId, verifyMemberToken } from "../src/memberstack";
+import { IDS, mockAccountUpstreams, mockMemberstack } from "./helpers";
 
 const ctx = () => createExecutionContext();
 beforeEach(async () => {
@@ -95,5 +95,40 @@ describe("verifyMemberToken", () => {
       expect(String(warn.mock.calls[0])).toContain(String(status));
       expect(String(warn.mock.calls[0])).not.toContain("secret-member-token");
     }
+  });
+});
+
+describe("getStripeCustomerId", () => {
+  it("returns the id", async () => {
+    mockAccountUpstreams();
+    expect(await getStripeCustomerId(env, IDS.active)).toBe("cus_fake_active");
+  });
+  it("null when the member has no field", async () => {
+    mockAccountUpstreams();
+    expect(await getStripeCustomerId(env, IDS.inactive)).toBeNull();
+  });
+  it("'gone' on 404", async () => {
+    mockAccountUpstreams();
+    expect(await getStripeCustomerId(env, "mem_nobody")).toBe("gone");
+  });
+  it("500 throws upstream_unavailable", async () => {
+    mockAccountUpstreams({ memberGetStatus: 500 });
+    await expect(getStripeCustomerId(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+  });
+});
+
+describe("deleteMember", () => {
+  it("204 is OK, then the member is gone", async () => {
+    mockAccountUpstreams();
+    await deleteMember(env, IDS.active);
+    expect(await getStripeCustomerId(env, IDS.active)).toBe("gone");
+  });
+  it("404 is OK", async () => {
+    mockAccountUpstreams();
+    await expect(deleteMember(env, "mem_nobody")).resolves.toBeUndefined();
+  });
+  it("500 throws upstream_unavailable", async () => {
+    mockAccountUpstreams({ memberDeleteStatus: 500 });
+    await expect(deleteMember(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
   });
 });

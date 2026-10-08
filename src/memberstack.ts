@@ -3,7 +3,7 @@ import { ApiError } from "./errors";
 import { upstreamFetch } from "./upstream";
 
 const FRESH_MS = 10 * 60_000;
-const STALE_MS = 24 * 3600_000;
+export const STALE_MS = 24 * 3600_000;
 const TIMEOUT_MS = 5000;
 
 export interface Membership {
@@ -48,6 +48,25 @@ async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
     (c) => statuses.includes(String(c.status)) && (plans.length === 0 || plans.includes(String(c.planId))),
   );
   return { active, email: String(m.auth?.email ?? ""), at: Date.now() };
+}
+
+// Admin API: GET /members/:id -> { data: { stripeCustomerId } }. "gone" = member already deleted.
+// verify in Task 10: field name stripeCustomerId
+export async function getStripeCustomerId(env: Env, memberId: string): Promise<string | null | "gone"> {
+  const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
+  if (res.status === 404) return "gone";
+  if (!res.ok) throw new ApiError(502, "upstream_unavailable");
+  const m = ((await res.json().catch(() => null)) as { data?: { stripeCustomerId?: unknown } } | null)?.data;
+  if (!m) throw new ApiError(502, "upstream_unavailable");
+  return typeof m.stripeCustomerId === "string" && m.stripeCustomerId ? m.stripeCustomerId : null;
+}
+
+// Admin API: DELETE /members/:id. 2xx or 404 (already gone) is success.
+// verify in Task 10: delete endpoint and whether it cancels Stripe itself
+export async function deleteMember(env: Env, memberId: string): Promise<void> {
+  const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { method: "DELETE", headers: headers(env) }, TIMEOUT_MS);
+  if (!res.ok) console.warn("memberstack delete: status", res.status);
+  if (!res.ok && res.status !== 404) throw new ApiError(502, "upstream_unavailable");
 }
 
 export async function getMembership(env: Env, _ctx: ExecutionContext, memberId: string): Promise<Membership> {

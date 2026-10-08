@@ -1,0 +1,44 @@
+{
+  "cus_fake_active": [
+    {
+      "id": "sub_fake_active",
+      "status": "active"
+    },
+    {
+      "id": "sub_fake_old",
+      "status": "canceled"
+    }
+  ],
+  "cus_fake_pastdue": [
+    {
+      "id": "sub_fake_pastdue",
+      "status": "past_due"
+    },
+    {
+      "id": "sub_fake_trial",
+      "status": "trialing"
+    }
+  ],
+  "cus_fake_odd": [
+    {
+      "id": "sub_fake_unpaid",
+      "status": "unpaid"
+    },
+    {
+      "id": "sub_fake_paused",
+      "status": "paused"
+    },
+    {
+      "id": "sub_fake_incomplete",
+      "status": "incomplete"
+    },
+    {
+      "id": "sub_fake_expired",
+      "status": "incomplete_expired"
+    },
+    {
+      "id": "sub_fake_gone",
+      "status": "canceled"
+    }
+  ]
+}
