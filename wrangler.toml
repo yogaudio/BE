@@ -47,6 +47,7 @@ MEMBERSTACK_API_BASE = "https://admin.memberstack.com"
 WEBFLOW_API_BASE = "https://api.webflow.com"
 TRANSISTOR_API_BASE = "https://api.transistor.fm"
 STRIPE_API_BASE = "https://api.stripe.com"
+# STRIPE_RESTRICTED_KEY is a secret: wrangler secret put STRIPE_RESTRICTED_KEY --env production
 WEBFLOW_COLLECTION_ID = "SET_IN_TASK_10"
 # verify in Task 10: real field slugs and the category collection id
 WF_CATEGORY_COLLECTION_ID = "SET_IN_TASK_10"

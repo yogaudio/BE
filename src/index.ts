@@ -3,6 +3,7 @@ import { ApiError, jsonError } from "./errors";
 import { authCode, authExchange, authLogout, authRefresh } from "./auth";
 import { getPlay } from "./audio";
 import { getCatalog } from "./catalog";
+import { deleteAccount } from "./account";
 
 export type { Env } from "./env";
 
@@ -15,6 +16,7 @@ export const routes: Record<string, Handler> = {
   "POST /auth/exchange": authExchange,
   "POST /auth/refresh": authRefresh,
   "POST /auth/logout": authLogout,
+  "POST /account/delete": deleteAccount,
   "GET /catalog": getCatalog,
   "GET /play/:classId": getPlay,
 };

@@ -24,8 +24,10 @@ export async function cancelLiveSubscriptions(env: Env, customerId: string): Pro
   const res = await stripeFetch(env, `/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100`, "GET");
   if (res.status === 404) return 0;
   if (!res.ok) throw new ApiError(502, "stripe_unavailable");
-  const body = (await res.json().catch(() => null)) as { data?: { id?: string; status?: string }[] } | null;
+  const body = (await res.json().catch(() => null)) as { data?: { id?: string; status?: string }[]; has_more?: boolean } | null;
   if (!body || !Array.isArray(body.data)) throw new ApiError(502, "stripe_unavailable");
+  // ponytail: one page of 100 subscriptions; fail closed rather than delete a member with a live sub unseen. Add paging (starting_after) if a customer ever has >100.
+  if (body.has_more) throw new ApiError(502, "stripe_unavailable");
   const live = body.data.filter((s) => typeof s.id === "string" && LIVE.includes(String(s.status)));
   for (const s of live) {
     const c = await stripeFetch(env, `/v1/subscriptions/${encodeURIComponent(s.id!)}`, "DELETE");

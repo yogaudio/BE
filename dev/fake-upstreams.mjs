@@ -1,7 +1,8 @@
-// Fake Memberstack, Webflow, Transistor and the yogaudio.com login page, for local dev. Node built-ins only.
+// Fake Memberstack, Stripe, Webflow, Transistor and the yogaudio.com login page, for local dev. Node built-ins only.
 // Run: node dev/fake-upstreams.mjs   (port 8788)
 // Faults: FAKE_FAULT=slow|500|drop env var, `?fault=` on any request, or at runtime
-//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|webflow|transistor]
+//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow|transistor]
+// State (deleted members, cancelled subscriptions) lives for the process; GET /_reset restores it.
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 
@@ -11,11 +12,15 @@ const KEYS = {
   memberstack: process.env.MEMBERSTACK_SECRET_KEY ?? "sk_fake_memberstack",
   webflow: process.env.WEBFLOW_TOKEN ?? "fake-webflow-token",
   transistor: process.env.TRANSISTOR_API_KEY ?? "fake-transistor-key",
+  stripe: process.env.STRIPE_RESTRICTED_KEY ?? "rk_fake_stripe",
 };
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const members = fixture("members.json");
 const webflow = fixture("webflow-items.json");
 const episodes = fixture("transistor-episodes.json");
+const subsFixture = fixture("stripe-subscriptions.json");
+let subs = structuredClone(subsFixture);
+const deleted = new Set();
 
 let faultAll = process.env.FAKE_FAULT || "off";
 const faultBy = {};
@@ -68,6 +73,12 @@ createServer(async (req, res) => {
     return send(res, 200, { faultAll, faultBy });
   }
 
+  if (p === "/_reset") {
+    subs = structuredClone(subsFixture);
+    deleted.clear();
+    return send(res, 200, { reset: true });
+  }
+
   if (p === "/app-login") {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     return res.end(loginPage());
@@ -84,7 +95,7 @@ createServer(async (req, res) => {
       let token;
       try { token = JSON.parse(raw).token; } catch { return send(res, 400, { message: "bad json" }); }
       const m = members[token];
-      if (!m) return send(res, 401, { message: "invalid token" });
+      if (!m || deleted.has(m.id)) return send(res, 401, { message: "invalid token" });
       const now = Math.floor(Date.now() / 1000);
       return send(res, 200, { data: { id: m.id, type: "member", iat: now, exp: now + 3600, aud: "app_fake", iss: "https://api.memberstack.io" } });
     }
@@ -92,7 +103,32 @@ createServer(async (req, res) => {
     const mm = p.match(/^\/memberstack\/members\/([^/]+)$/);
     if (req.method === "GET" && mm) {
       const m = Object.values(members).find((x) => x.id === mm[1]);
-      return m ? send(res, 200, { data: m }) : send(res, 404, { message: "member not found" });
+      return m && !deleted.has(m.id) ? send(res, 200, { data: m }) : send(res, 404, { message: "member not found" });
+    }
+    // DELETE /members/:id  https://developers.memberstack.com/admin-rest-api/members#delete-member
+    if (req.method === "DELETE" && mm) {
+      const m = Object.values(members).find((x) => x.id === mm[1]);
+      if (!m || deleted.has(m.id)) return send(res, 404, { message: "member not found" });
+      deleted.add(m.id);
+      res.writeHead(204);
+      return res.end();
+    }
+  }
+
+  // Stripe API (restricted key). https://docs.stripe.com/api/subscriptions
+  if (p.startsWith("/stripe/")) {
+    if (await applyFault("stripe", url, req, res)) return;
+    if (!auth("stripe", req.headers.authorization === `Bearer ${KEYS.stripe}`)) return;
+    if (req.method === "GET" && p === "/stripe/v1/subscriptions") {
+      const list = subs[url.searchParams.get("customer")];
+      return list ? send(res, 200, { object: "list", data: list, has_more: false }) : send(res, 404, { error: { message: "No such customer" } });
+    }
+    const sm = p.match(/^\/stripe\/v1\/subscriptions\/([^/]+)$/);
+    if (req.method === "DELETE" && sm) {
+      const sub = Object.values(subs).flat().find((x) => x.id === sm[1]);
+      if (!sub) return send(res, 404, { error: { message: "No such subscription" } });
+      sub.status = "canceled";
+      return send(res, 200, sub);
     }
   }
 

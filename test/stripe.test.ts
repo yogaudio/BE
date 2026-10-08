@@ -60,3 +60,17 @@ describe("cancelLiveSubscriptions", () => {
     for (const [, init] of spy.mock.calls) expect(new Headers(init!.headers).get("authorization")).toBe("Bearer rk_fake_stripe");
   });
 });
+
+describe("cancelLiveSubscriptions paging", () => {
+  it("has_more fails closed with stripe_unavailable and cancels nothing", async () => {
+    const calls: string[] = [];
+    const real = mockAccountUpstreams({ calls });
+    const impl = real.getMockImplementation()!;
+    real.mockImplementation(async (i, init) => {
+      const res = await impl(i, init);
+      return init?.method === "DELETE" ? res : Response.json({ ...((await res.json()) as object), has_more: true });
+    });
+    await expect(cancelLiveSubscriptions(env, "cus_fake_active")).rejects.toMatchObject({ status: 502, code: "stripe_unavailable" });
+    expect(deletes(calls)).toHaveLength(0);
+  });
+});
