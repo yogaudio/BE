@@ -58,6 +58,7 @@ export interface AccountUpstreamOpts {
   calls?: string[];
   stripeStatus?: number; // forces every Stripe response status
   stripeDown?: boolean; // Stripe network error
+  stripeResourceMissing?: boolean; // list answers 400 with error.code resource_missing
   memberDeleteStatus?: number;
   memberGetStatus?: number;
 }
@@ -74,6 +75,7 @@ export function mockAccountUpstreams(opts: AccountUpstreamOpts = {}) {
       if (opts.stripeStatus) return Response.json({ error: "boom" }, { status: opts.stripeStatus });
       if (new Headers(init?.headers).get("authorization") !== `Bearer ${env.STRIPE_RESTRICTED_KEY}`) return Response.json({}, { status: 401 });
       if (url.pathname === "/stripe/v1/subscriptions") {
+        if (opts.stripeResourceMissing) return Response.json({ error: { code: "resource_missing", param: "customer" } }, { status: 400 });
         const list = subs[url.searchParams.get("customer") ?? ""];
         return list ? Response.json({ data: list }) : Response.json({ error: "no such customer" }, { status: 404 });
       }

@@ -28,7 +28,10 @@ const clean = async () => {
   for (const id of [...Object.values(IDS), OTHER]) await env.CACHE.delete(`ms:${id}`);
 };
 const deletes = (calls: string[]) => calls.filter((c) => c.startsWith("DELETE"));
-const cleaned = async (id: string) => expect([await count("refresh_tokens", id), await count("auth_codes", id), await env.CACHE.get(`ms:${id}`)]).toEqual([0, 0, null]);
+const cleaned = async (id: string) => {
+  expect([await count("refresh_tokens", id), await count("auth_codes", id)]).toEqual([0, 0]);
+  expect(await env.CACHE.get<{ active: boolean }>(`ms:${id}`, "json")).toMatchObject({ active: false });
+};
 const kept = async (id: string) => expect([await count("refresh_tokens", id), await count("auth_codes", id), await env.CACHE.get(`ms:${id}`) !== null]).toEqual([1, 1, true]);
 
 beforeEach(async () => {
@@ -108,6 +111,19 @@ describe("POST /account/delete", () => {
     expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(0);
     expect(deletes(calls)).toEqual([`DELETE /memberstack/members/${IDS.active}`]);
     await cleaned(IDS.active);
+  });
+
+  it("Memberstack DELETE failure logs the status; success logs member id and count, never secrets", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const opts: AccountUpstreamOpts = { memberDeleteStatus: 500 };
+    mockAccountUpstreams(opts);
+    expect((await del()).status).toBe(502);
+    expect(warn.mock.calls.some((c) => c.includes(500))).toBe(true);
+    opts.memberDeleteStatus = undefined;
+    expect((await del()).status).toBe(204);
+    expect(log).toHaveBeenCalledWith("account deleted:", IDS.active, "subscriptions cancelled:", 0);
+    expect(JSON.stringify([...warn.mock.calls, ...log.mock.calls])).not.toMatch(/rk_fake_stripe|Bearer/);
   });
 
   it("401 without a token or with a bad one, no upstream calls", async () => {

@@ -3,7 +3,7 @@ import { ApiError } from "./errors";
 import { upstreamFetch } from "./upstream";
 
 const FRESH_MS = 10 * 60_000;
-const STALE_MS = 24 * 3600_000;
+export const STALE_MS = 24 * 3600_000;
 const TIMEOUT_MS = 5000;
 
 export interface Membership {
@@ -65,6 +65,7 @@ export async function getStripeCustomerId(env: Env, memberId: string): Promise<s
 // verify in Task 10: delete endpoint and whether it cancels Stripe itself
 export async function deleteMember(env: Env, memberId: string): Promise<void> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { method: "DELETE", headers: headers(env) }, TIMEOUT_MS);
+  if (!res.ok) console.warn("memberstack delete: status", res.status);
   if (!res.ok && res.status !== 404) throw new ApiError(502, "upstream_unavailable");
 }
 

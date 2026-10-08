@@ -40,7 +40,7 @@ Placeholders (`SET_IN_TASK_10`):
 "Verify in Task 10" markers (check against the real APIs, fix the paths if they differ):
 - `src/memberstack.ts:20` verify-token response (`data.id`); `src/memberstack.ts:38` member shape (`planConnections[].planId/status`, `auth.email`).
 - `src/memberstack.ts:54` `getStripeCustomerId` member field name `stripeCustomerId`; `src/memberstack.ts:65` `deleteMember` delete endpoint and whether it cancels Stripe itself.
-- `src/stripe.ts:23` subscription list response for a deleted customer (assumed 404). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:49`, already `https://api.stripe.com`) are listed in the steps below.
+- `src/stripe.ts:23` subscription list response for a deleted customer (assumed 404; a 400 with `error.code` `resource_missing` is also treated as "customer gone"). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:49`, already `https://api.stripe.com`) are listed in the steps below.
 - `src/webflow.ts:33` Webflow v2 items response shape.
 - `src/audio.ts:27` a share.transistor.fm URL's last segment works as an episode id; `src/audio.ts:37` Transistor episode response (`data.attributes.media_url`, `duration`).
 - `wrangler.toml:52` the real Webflow field slugs: `WF_FIELD_TITLE`, `WF_FIELD_DURATION`, `WF_FIELD_CATEGORY`, `WF_FIELD_TEACHER`, `WF_FIELD_IMAGE`, `WF_FIELD_DESCRIPTION`, `WF_FIELD_AUDIO` (each names the CMS field the Worker reads for that value), plus `WF_CATEGORY_COLLECTION_ID`.

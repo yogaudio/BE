@@ -50,6 +50,23 @@ describe("cancelLiveSubscriptions", () => {
     expect(JSON.stringify(warn.mock.calls)).not.toContain("rk_fake_stripe");
     expect(warn).toHaveBeenCalled();
   });
+  it("cancels unpaid, paused and incomplete; leaves incomplete_expired and canceled", async () => {
+    const calls: string[] = [];
+    mockAccountUpstreams({ calls });
+    expect(await cancelLiveSubscriptions(env, "cus_fake_odd")).toBe(3);
+    expect(deletes(calls).sort()).toEqual(["unpaid", "paused", "incomplete"].map((x) => `DELETE /stripe/v1/subscriptions/sub_fake_${x}`).sort());
+  });
+  it("resource_missing 400 means customer gone: 0 subs, no throw", async () => {
+    mockAccountUpstreams({ stripeResourceMissing: true });
+    expect(await cancelLiveSubscriptions(env, "cus_fake_active")).toBe(0);
+  });
+  it("logs status of every non-2xx and never the key", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockAccountUpstreams({ stripeStatus: 500 });
+    await expect(cancelLiveSubscriptions(env, "cus_fake_active")).rejects.toMatchObject({ code: "stripe_unavailable" });
+    expect(warn.mock.calls[0]).toContain(500);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("rk_fake_stripe");
+  });
   it("a network error throws stripe_unavailable", async () => {
     mockAccountUpstreams({ stripeDown: true });
     await expect(cancelLiveSubscriptions(env, "cus_fake_active")).rejects.toMatchObject({ status: 502, code: "stripe_unavailable" });

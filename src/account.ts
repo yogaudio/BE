@@ -1,5 +1,5 @@
 import type { Env } from "./env";
-import { deleteMember, getStripeCustomerId } from "./memberstack";
+import { deleteMember, getStripeCustomerId, STALE_MS } from "./memberstack";
 import { cancelLiveSubscriptions } from "./stripe";
 import { verifyAccessToken } from "./tokens";
 
@@ -9,15 +9,18 @@ import { verifyAccessToken } from "./tokens";
 export async function deleteAccount(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
   const id = await verifyAccessToken(env, request.headers.get("Authorization"));
   const customer = await getStripeCustomerId(env, id);
+  let cancelled = 0;
   if (customer !== "gone") {
-    if (customer) await cancelLiveSubscriptions(env, customer);
+    if (customer) cancelled = await cancelLiveSubscriptions(env, customer);
     await deleteMember(env, id);
   }
   await env.DB.batch([
     env.DB.prepare("DELETE FROM refresh_tokens WHERE member_id = ?").bind(id),
     env.DB.prepare("DELETE FROM auth_codes WHERE member_id = ?").bind(id),
   ]);
-  // Drop the cached membership, or /play would keep trusting a fresh "active" entry for up to 10 minutes.
-  await env.CACHE.delete(`ms:${id}`);
+  // Overwrite (not delete) the cached membership with an inactive entry: an in-flight request cannot then re-cache a fresh "active" one
+  // for /play to trust. Same shape and TTL as getMembership writes.
+  await env.CACHE.put(`ms:${id}`, JSON.stringify({ active: false, email: "", at: Date.now() }), { expirationTtl: STALE_MS / 1000 });
+  console.log("account deleted:", id, "subscriptions cancelled:", cancelled);
   return new Response(null, { status: 204 });
 }

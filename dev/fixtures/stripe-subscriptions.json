@@ -18,5 +18,27 @@
       "id": "sub_fake_trial",
       "status": "trialing"
     }
+  ],
+  "cus_fake_odd": [
+    {
+      "id": "sub_fake_unpaid",
+      "status": "unpaid"
+    },
+    {
+      "id": "sub_fake_paused",
+      "status": "paused"
+    },
+    {
+      "id": "sub_fake_incomplete",
+      "status": "incomplete"
+    },
+    {
+      "id": "sub_fake_expired",
+      "status": "incomplete_expired"
+    },
+    {
+      "id": "sub_fake_gone",
+      "status": "canceled"
+    }
   ]
 }

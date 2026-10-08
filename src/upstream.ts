@@ -9,6 +9,9 @@ export async function upstreamFetch(url: string, init: RequestInit = {}, timeout
   } catch {
     throw new ApiError(502, "upstream_unavailable");
   }
-  if (res.status >= 500) throw new ApiError(502, "upstream_unavailable");
+  if (res.status >= 500) {
+    console.warn("upstream: status", res.status, new URL(url).hostname);
+    throw new ApiError(502, "upstream_unavailable");
+  }
   return res;
 }
