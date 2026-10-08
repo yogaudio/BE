@@ -1,0 +1,22 @@
+{
+  "cus_fake_active": [
+    {
+      "id": "sub_fake_active",
+      "status": "active"
+    },
+    {
+      "id": "sub_fake_old",
+      "status": "canceled"
+    }
+  ],
+  "cus_fake_pastdue": [
+    {
+      "id": "sub_fake_pastdue",
+      "status": "past_due"
+    },
+    {
+      "id": "sub_fake_trial",
+      "status": "trialing"
+    }
+  ]
+}

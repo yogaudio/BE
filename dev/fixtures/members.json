@@ -1,17 +1,49 @@
 {
   "fake-ms-token-active": {
     "id": "mem_fake_active",
-    "auth": { "email": "active@example.test" },
-    "planConnections": [{ "id": "con_active", "planId": "pln_fake_monthly", "status": "ACTIVE", "active": true, "type": "SUBSCRIPTION" }]
+    "auth": {
+      "email": "active@example.test"
+    },
+    "planConnections": [
+      {
+        "id": "con_active",
+        "planId": "pln_fake_monthly",
+        "status": "ACTIVE",
+        "active": true,
+        "type": "SUBSCRIPTION"
+      }
+    ],
+    "stripeCustomerId": "cus_fake_active"
   },
   "fake-ms-token-inactive": {
     "id": "mem_fake_inactive",
-    "auth": { "email": "inactive@example.test" },
-    "planConnections": [{ "id": "con_inactive", "planId": "pln_fake_monthly", "status": "CANCELED", "active": false, "type": "SUBSCRIPTION" }]
+    "auth": {
+      "email": "inactive@example.test"
+    },
+    "planConnections": [
+      {
+        "id": "con_inactive",
+        "planId": "pln_fake_monthly",
+        "status": "CANCELED",
+        "active": false,
+        "type": "SUBSCRIPTION"
+      }
+    ]
   },
   "fake-ms-token-pastdue": {
     "id": "mem_fake_pastdue",
-    "auth": { "email": "pastdue@example.test" },
-    "planConnections": [{ "id": "con_pastdue", "planId": "pln_fake_monthly", "status": "PAST_DUE", "active": true, "type": "SUBSCRIPTION" }]
+    "auth": {
+      "email": "pastdue@example.test"
+    },
+    "planConnections": [
+      {
+        "id": "con_pastdue",
+        "planId": "pln_fake_monthly",
+        "status": "PAST_DUE",
+        "active": true,
+        "type": "SUBSCRIPTION"
+      }
+    ],
+    "stripeCustomerId": "cus_fake_pastdue"
   }
 }

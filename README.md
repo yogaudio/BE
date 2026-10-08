@@ -39,6 +39,8 @@ Placeholders (`SET_IN_TASK_10`):
 
 "Verify in Task 10" markers (check against the real APIs, fix the paths if they differ):
 - `src/memberstack.ts:20` verify-token response (`data.id`); `src/memberstack.ts:38` member shape (`planConnections[].planId/status`, `auth.email`).
+- `src/memberstack.ts` `getStripeCustomerId` member field name `stripeCustomerId`; `deleteMember` delete endpoint and whether it cancels Stripe itself.
+- `src/stripe.ts` subscription list response for a deleted customer (assumed 404); `STRIPE_RESTRICTED_KEY` (secret, `wrangler secret put --env production`) needs read+write on Subscriptions.
 - `src/webflow.ts:33` Webflow v2 items response shape.
 - `src/audio.ts:27` a share.transistor.fm URL's last segment works as an episode id; `src/audio.ts:37` Transistor episode response (`data.attributes.media_url`, `duration`).
 - `wrangler.toml:49` the real Webflow field slugs: `WF_FIELD_TITLE`, `WF_FIELD_DURATION`, `WF_FIELD_CATEGORY`, `WF_FIELD_TEACHER`, `WF_FIELD_IMAGE`, `WF_FIELD_DESCRIPTION`, `WF_FIELD_AUDIO` (each names the CMS field the Worker reads for that value), plus `WF_CATEGORY_COLLECTION_ID`.
@@ -48,7 +50,7 @@ Steps:
 1. Create the stores and paste their ids into `[env.production]`:
    `./node_modules/.bin/wrangler d1 create yogaudio-api` and `./node_modules/.bin/wrangler kv namespace create CACHE`.
 2. Apply the schema remotely: `./node_modules/.bin/wrangler d1 migrations apply DB --remote --env production`.
-3. Secrets, each with `wrangler secret put <NAME> --env production`: `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TRANSISTOR_API_KEY`, and `TOKEN_SIGNING_KEY` generated fresh with `openssl rand -base64 48` (never reuse the local one; changing it later signs everyone out).
+3. Secrets, each with `wrangler secret put <NAME> --env production`: `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TRANSISTOR_API_KEY`, `STRIPE_RESTRICTED_KEY`, and `TOKEN_SIGNING_KEY` generated fresh with `openssl rand -base64 48` (never reuse the local one; changing it later signs everyone out).
 4. Membership rules: `ACTIVE_PLAN_STATUSES` (Q3, default `ACTIVE,TRIALING,PAST_DUE`) and `ALLOWED_PLAN_IDS` (Q4, default empty = any plan). Confirm both against the real plans before deploy.
 5. Sign in with Apple (Q9): if the site offers Google or another third-party login, App Review rule 4.8 needs Sign in with Apple too. Recheck the live login form.
 6. Deploy (`wrangler deploy --env production`), then set `YOGAUDIO_CODE_URL` in the Webflow embed.

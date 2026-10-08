@@ -5,6 +5,7 @@ export type ErrorCode =
   | "membership_inactive"
   | "not_found"
   | "upstream_unavailable"
+  | "stripe_unavailable"
   | "internal";
 
 // Handlers throw this; the router turns it into `{ "error": code }` with the status.
