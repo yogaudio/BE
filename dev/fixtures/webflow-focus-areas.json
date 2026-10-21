@@ -1,0 +1,243 @@
+{
+  "items": [
+    {
+      "id": "6ad26e659aa98f6d8d36ba13",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-16T18:35:17.148Z",
+      "lastUpdated": "2026-10-16T18:35:17.148Z",
+      "createdOn": "2026-10-16T18:35:17.148Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Inner Journey",
+        "slug": "inner-journey"
+      }
+    },
+    {
+      "id": "6ac92e9067bfc3c29fffff32",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-09T18:12:52.569Z",
+      "lastUpdated": "2026-10-09T18:12:52.569Z",
+      "createdOn": "2026-10-09T18:12:32.289Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Legs",
+        "slug": "legs"
+      }
+    },
+    {
+      "id": "6ac92e7a34b33983c07944c5",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-09T18:12:55.318Z",
+      "lastUpdated": "2026-10-09T18:12:55.318Z",
+      "createdOn": "2026-10-09T18:12:10.968Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Quads",
+        "slug": "quads"
+      }
+    },
+    {
+      "id": "6ab2926d210239843f088885",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-22T14:36:29.311Z",
+      "lastUpdated": "2026-09-22T14:36:29.311Z",
+      "createdOn": "2026-09-22T14:36:29.311Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Gratitude",
+        "slug": "gratitude"
+      }
+    },
+    {
+      "id": "6aa445f1df7cc013ad7a0bb6",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-11T18:18:25.117Z",
+      "lastUpdated": "2026-09-11T18:18:25.117Z",
+      "createdOn": "2026-09-11T18:18:25.117Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Grief",
+        "slug": "grief"
+      }
+    },
+    {
+      "id": "6a9acf7fb35db938d1ed5e32",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-04T14:02:39.030Z",
+      "lastUpdated": "2026-09-04T14:02:39.030Z",
+      "createdOn": "2026-09-04T14:02:39.030Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Upper Body",
+        "slug": "upper-body"
+      }
+    },
+    {
+      "id": "6a9acf1ca127967c7c69f7c0",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-04T16:32:09.503Z",
+      "lastUpdated": "2026-09-04T14:02:13.615Z",
+      "createdOn": "2026-09-04T14:01:00.898Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Chest",
+        "slug": "chest"
+      }
+    },
+    {
+      "id": "6a7f39e3c3505c21b900dd08",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-14T15:53:07.941Z",
+      "lastUpdated": "2026-08-14T15:53:07.941Z",
+      "createdOn": "2026-08-14T15:53:07.941Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Anxiety",
+        "slug": "anxiety"
+      }
+    },
+    {
+      "id": "6a15b1e8d8d6218ac4390116",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-06-06T12:01:58.588Z",
+      "lastUpdated": "2026-06-06T11:43:08.559Z",
+      "createdOn": "2026-05-26T14:44:56.175Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Hamstrings",
+        "slug": "hamstrings"
+      }
+    },
+    {
+      "id": "6a15b14819407ae87ddf0cac",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-05-26T15:20:54.227Z",
+      "lastUpdated": "2026-05-26T14:42:16.554Z",
+      "createdOn": "2026-05-26T14:42:16.554Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Core",
+        "slug": "core"
+      }
+    },
+    {
+      "id": "6a15b08c39e7394b69405fc1",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-05-26T15:20:54.227Z",
+      "lastUpdated": "2026-05-26T14:39:08.021Z",
+      "createdOn": "2026-05-26T14:39:08.021Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Spine",
+        "slug": "spine"
+      }
+    },
+    {
+      "id": "69df9fe334067da98e5e95d4",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:25:39.550Z",
+      "createdOn": "2026-04-15T14:25:39.550Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Grounding",
+        "slug": "grounding"
+      }
+    },
+    {
+      "id": "69df9fd89bf045140d6a68fe",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:25:28.376Z",
+      "createdOn": "2026-04-15T14:25:28.376Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Evening",
+        "slug": "evening"
+      }
+    },
+    {
+      "id": "69df9fcd778733d37607fba1",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:25:17.705Z",
+      "createdOn": "2026-04-15T14:25:17.705Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Morning",
+        "slug": "morning"
+      }
+    },
+    {
+      "id": "69df9fc51394a72ccd102cc6",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:25:09.900Z",
+      "createdOn": "2026-04-15T14:25:09.900Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Stress Relief",
+        "slug": "stress-relief"
+      }
+    },
+    {
+      "id": "69df9fb5b5711b9932fa2b64",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:24:53.763Z",
+      "createdOn": "2026-04-15T14:24:53.763Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Shoulders",
+        "slug": "shoulders"
+      }
+    },
+    {
+      "id": "69df9fad4e27dd6bfb04d83e",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:24:45.579Z",
+      "createdOn": "2026-04-15T14:24:45.579Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Hips",
+        "slug": "hips"
+      }
+    },
+    {
+      "id": "69df9f9d0d7088308a122d72",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:24:29.787Z",
+      "createdOn": "2026-04-15T14:24:29.787Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Full Body",
+        "slug": "full-body"
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 100,
+    "offset": 0,
+    "total": 18
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "items": [
+    {
+      "id": "6ad26db49aa98f6d8d3667e3",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-16T18:32:20.038Z",
+      "lastUpdated": "2026-10-16T18:32:20.038Z",
+      "createdOn": "2026-10-16T18:32:20.038Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Guided Visualization",
+        "slug": "guided-visualization"
+      }
+    },
+    {
+      "id": "6a95e0bbcf2c274a10cd42a7",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-04T16:32:09.503Z",
+      "lastUpdated": "2026-08-31T20:14:57.624Z",
+      "createdOn": "2026-08-31T20:14:51.414Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Other",
+        "slug": "other"
+      }
+    },
+    {
+      "id": "69df9f83206b42d96bca10da",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-07-31T18:03:42.212Z",
+      "lastUpdated": "2026-07-31T17:47:04.382Z",
+      "createdOn": "2026-04-15T14:24:03.519Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Yoga Nidra",
+        "slug": "yoganidra"
+      }
+    },
+    {
+      "id": "69df9f647d3a70d4b281fd02",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:23:32.273Z",
+      "createdOn": "2026-04-15T14:23:32.273Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Restorative",
+        "slug": "restorative"
+      }
+    },
+    {
+      "id": "69df9f599ea1afca33119640",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:23:21.002Z",
+      "createdOn": "2026-04-15T14:23:21.002Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Yin",
+        "slug": "yin"
+      }
+    },
+    {
+      "id": "69df9f4e9677f67205c7b770",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:23:10.194Z",
+      "createdOn": "2026-04-15T14:23:10.194Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Vinyasa",
+        "slug": "vinyasa"
+      }
+    },
+    {
+      "id": "69df9f3bd1ba1c756df7f4f8",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-04-15T18:18:26.041Z",
+      "lastUpdated": "2026-04-15T14:22:51.289Z",
+      "createdOn": "2026-04-15T14:22:51.289Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "name": "Slow Flow",
+        "slug": "slow-flow"
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 100,
+    "offset": 0,
+    "total": 7
+  }
+}

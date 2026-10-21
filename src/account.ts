@@ -1,4 +1,5 @@
 import type { Env } from "./env";
+import { ApiError } from "./errors";
 import { deleteMember, getStripeCustomerId, STALE_MS } from "./memberstack";
 import { cancelLiveSubscriptions } from "./stripe";
 import { verifyAccessToken } from "./tokens";
@@ -7,6 +8,8 @@ import { verifyAccessToken } from "./tokens";
 // Stripe first (a failure there deletes nothing), then the Memberstack member, then our own rows.
 // A retry after a partial failure finds the subscriptions already cancelled or the member already gone.
 export async function deleteAccount(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  // Safety: without the Stripe key a member with no Stripe customer would still be deleted from Memberstack. Off until configured.
+  if (!env.STRIPE_RESTRICTED_KEY) throw new ApiError(404, "not_found");
   const id = await verifyAccessToken(env, request.headers.get("Authorization"));
   const customer = await getStripeCustomerId(env, id);
   let cancelled = 0;

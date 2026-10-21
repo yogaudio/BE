@@ -1,43 +1,41 @@
-import { buildAudioIndex, type Audio } from "./audio";
 import type { Env } from "./env";
 import { ApiError } from "./errors";
 import { sha256, verifyAccessToken } from "./tokens";
-import { loadWebflowCategories, loadWebflowItems, type WebflowCategory, type WebflowItem } from "./webflow";
+import { F, loadWebflowCollections, type WebflowCollections, type WebflowRawItem } from "./webflow";
 
 const FRESH_MS = 10 * 60_000;
-const KEY = "catalog:v1";
+const KEY = "catalog:v2";
+const AUDIO_URL = /^https:\/\/media\.transistor\.fm\//;
 
 export interface CatalogClass {
   id: string;
   slug: string;
   title: string;
-  durationSec: number | null;
-  categoryIds: string[];
-  teacher: string | null;
-  artworkUrl: string | null;
   description: string | null;
+  durationSec: number | null;
+  styleIds: string[];
+  focusAreaIds: string[];
+  durationId: string | null;
 }
-export interface CatalogBody {
+export interface CatalogOption {
+  id: string;
+  name: string;
+}
+export interface CatalogV2 {
   classes: CatalogClass[];
-  categories: WebflowCategory[];
+  styles: CatalogOption[];
+  focusAreas: CatalogOption[];
+  durations: CatalogOption[];
 }
-export type Catalog = CatalogBody & { version: string };
+export interface ClassAudio {
+  url: string;
+  durationSec: number | null;
+}
 // `audio` is the server-side classId -> audio index. It lives only in this KV entry, next to the catalog it was
 // built with; only `json` is ever served by /catalog. /play reads `audio`.
-type Entry = { version: string; builtAt: number; json: string; audio: Record<string, Audio> };
+type Entry = { version: string; builtAt: number; json: string; audio: Record<string, ClassAudio> };
 
 const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
-
-// Seconds as a number, "mm:ss" or "hh:mm:ss"; anything else is null.
-function parseDuration(v: unknown): number | null {
-  if (typeof v === "number") return Number.isFinite(v) && Math.round(v) > 0 ? Math.round(v) : null;
-  const m = typeof v === "string" ? v.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/) : null;
-  if (!m) return null;
-  const [h, min, s] = [Number(m[1] ?? 0), Number(m[2]), Number(m[3])];
-  if (s > 59 || (m[1] !== undefined && min > 59)) return null;
-  const total = h * 3600 + min * 60 + s;
-  return total > 0 ? total : null;
-}
 
 const NAMED: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", nbsp: " " };
 // One pass, so "&amp;#8217;" stays "&#8217;". An out-of-range code point is left as written.
@@ -58,49 +56,62 @@ function plainText(v: unknown): string | null {
   return t;
 }
 
-function httpsUrl(v: unknown): string | null {
-  const s = text(typeof v === "object" && v !== null ? (v as { url?: unknown }).url : v);
-  try {
-    return s && new URL(s).protocol === "https:" ? s : null;
-  } catch {
-    return null;
-  }
+const refs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((r): r is string => typeof r === "string") : []);
+const byName = (a: CatalogOption, b: CatalogOption) => a.name.localeCompare(b.name, "en", { sensitivity: "base" });
+
+// Minutes: the numeric field when positive, else the name as a positive integer, else null.
+function minutes(f: Record<string, unknown>): number | null {
+  const n = f[F.durationMinutes];
+  if (typeof n === "number" && n > 0 && Number.isFinite(n)) return n;
+  const name = text(f[F.name]);
+  return name && /^\d+$/.test(name) && Number(name) > 0 ? Number(name) : null;
 }
 
-// Pure. `audioIndex`: when given, classes absent from it are dropped and a missing duration is filled from it.
-// Without it nothing is dropped for missing audio. Audio never reaches the output.
-export function normalizeCatalog(
-  items: WebflowItem[],
-  audioIndex?: ReadonlyMap<string, Audio>,
-  categories: WebflowCategory[] = [],
-): CatalogBody {
-  const known = new Set(categories.map((c) => c.id));
-  const classes = items.flatMap((i): CatalogClass[] => {
-    const title = text(i.title);
-    if (!i.id || !title || (audioIndex && !audioIndex.has(i.id))) return [];
-    const refs = Array.isArray(i.category) ? i.category : [i.category];
-    return [{
-      id: i.id,
-      slug: i.slug,
-      title,
-      durationSec: parseDuration(i.duration) ?? audioIndex?.get(i.id)?.durationSec ?? null,
-      categoryIds: refs.filter((r): r is string => typeof r === "string" && known.has(r)),
-      teacher: text(i.teacher),
-      artworkUrl: httpsUrl(i.image),
-      description: plainText(i.description),
-    }];
+// Pure. Only items with a Transistor audio URL and a name become classes; unknown refs are dropped, and an
+// option list holds only the options some listed class uses.
+export function normalizeCatalog(raw: WebflowCollections): { catalog: CatalogV2; audio: ReadonlyMap<string, ClassAudio> } {
+  const names = (items: WebflowRawItem[]) =>
+    new Map(items.flatMap((i): [string, string][] => { const n = text(i.fieldData[F.name]); return n ? [[i.id, n]] : []; }));
+  const styleNames = names(raw.styles);
+  const focusNames = names(raw.focusAreas);
+  const durations = new Map(raw.durations.flatMap((i): [string, { name: string; min: number }][] => {
+    const name = text(i.fieldData[F.name]), min = minutes(i.fieldData);
+    return name && min ? [[i.id, { name, min }]] : [];
+  }));
+  const usedStyles = new Set<string>(), usedFocus = new Set<string>(), usedDurations = new Set<string>();
+  const audio = new Map<string, ClassAudio>();
+  const classes = raw.classes.flatMap((i): CatalogClass[] => {
+    const f = i.fieldData;
+    const title = text(f[F.name]);
+    const url = f[F.audio];
+    if (!title || typeof url !== "string" || !AUDIO_URL.test(url)) return [];
+    const styleIds = refs(f[F.style]).filter((r) => styleNames.has(r));
+    const focusAreaIds = refs(f[F.focusAreas]).filter((r) => focusNames.has(r));
+    const d = typeof f[F.durations] === "string" ? durations.get(f[F.durations] as string) : undefined;
+    const durationSec = d ? Math.round(d.min * 60) : null;
+    styleIds.forEach((r) => usedStyles.add(r));
+    focusAreaIds.forEach((r) => usedFocus.add(r));
+    if (d) usedDurations.add(f[F.durations] as string);
+    audio.set(i.id, { url, durationSec });
+    return [{ id: i.id, slug: String(f[F.slug] ?? ""), title, description: plainText(f[F.description]), durationSec, styleIds, focusAreaIds, durationId: d ? (f[F.durations] as string) : null }];
   });
-  return { classes, categories };
+  const options = (names: Map<string, string>, used: Set<string>) =>
+    [...used].map((id) => ({ id, name: names.get(id)! })).sort(byName);
+  return {
+    catalog: {
+      classes,
+      styles: options(styleNames, usedStyles),
+      focusAreas: options(focusNames, usedFocus),
+      durations: [...usedDurations].sort((a, b) => durations.get(a)!.min - durations.get(b)!.min).map((id) => ({ id, name: durations.get(id)!.name })),
+    },
+    audio,
+  };
 }
 
 async function rebuild(env: Env): Promise<Entry> {
-  const [items, categories] = await Promise.all([loadWebflowItems(env), loadWebflowCategories(env)]);
-  const index = await buildAudioIndex(env, items); // throws on a Transistor outage: the stale cache stays
-  const body = normalizeCatalog(items, index, categories);
-  const version = (await sha256(JSON.stringify(body))).slice(0, 16);
-  const entry: Entry = { version, builtAt: Date.now(), json: JSON.stringify({ version, ...body }),
-    audio: Object.fromEntries(body.classes.map((c) => [c.id, index.get(c.id)!])),
-  };
+  const { catalog, audio } = normalizeCatalog(await loadWebflowCollections(env));
+  const version = (await sha256(JSON.stringify(catalog))).slice(0, 16);
+  const entry: Entry = { version, builtAt: Date.now(), json: JSON.stringify({ version, ...catalog }), audio: Object.fromEntries(audio) };
   await env.CACHE.put(KEY, JSON.stringify(entry)).catch(() => {});
   return entry;
 }

@@ -1,6 +1,7 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteMember, getMembership, getStripeCustomerId, verifyMemberToken } from "../src/memberstack";
+import shapes from "../dev/fixtures/memberstack-member-shapes.json";
 import { IDS, mockAccountUpstreams, mockMemberstack } from "./helpers";
 
 const ctx = () => createExecutionContext();
@@ -10,18 +11,18 @@ beforeEach(async () => {
 });
 
 describe("getMembership", () => {
-  it("active, inactive and past-due fixtures", async () => {
+  it("active, no-plan and canceled fixtures", async () => {
     mockMemberstack();
-    expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "active@example.test" });
+    expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "user-1@example.com" });
     expect(await getMembership(env, ctx(), IDS.inactive)).toMatchObject({ active: false, stale: false });
-    expect(await getMembership(env, ctx(), IDS.pastDue)).toMatchObject({ active: true, stale: false });
+    expect(await getMembership(env, ctx(), IDS.canceled)).toMatchObject({ active: false, stale: false });
   });
 
   it("ALLOWED_PLAN_IDS restricts the plan", async () => {
     mockMemberstack();
     expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_other" }, ctx(), IDS.active)).active).toBe(false);
     await env.CACHE.delete(`ms:${IDS.active}`);
-    expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_x, pln_fake_monthly" }, ctx(), IDS.active)).active).toBe(true);
+    expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_x, pln_free-plan-6aap0jr6" }, ctx(), IDS.active)).active).toBe(true);
   });
 
   it("a fresh cache entry makes no fetch", async () => {
@@ -44,12 +45,12 @@ describe("getMembership", () => {
 
   describe("stale membership fallback", () => {
     const seed = (ageMs: number) =>
-      env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "active@example.test", at: Date.now() - ageMs }));
+      env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - ageMs }));
 
     it("uses a cached entry under 24h old when Memberstack is down, marked stale", async () => {
       await seed(2 * 3600_000);
       mockMemberstack({ down: true });
-      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: true, email: "active@example.test" });
+      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: true, email: "user-1@example.com" });
     });
 
     it("throws upstream_unavailable over 24h old or with no cache", async () => {
@@ -61,10 +62,10 @@ describe("getMembership", () => {
     });
 
     it("a fresh inactive entry is rechecked, so a renewal unlocks at once", async () => {
-      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "active@example.test", at: Date.now() - 60_000 }));
+      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "user-1@example.com", at: Date.now() - 60_000 }));
       const calls: string[] = [];
       mockMemberstack({ calls });
-      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: false, email: "active@example.test" });
+      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: false, email: "user-1@example.com" });
       expect(calls).toHaveLength(1);
     });
 
@@ -81,6 +82,54 @@ describe("getMembership", () => {
       expect((await getMembership(env, ctx(), IDS.active)).stale).toBe(false);
       expect(calls).toHaveLength(1);
     });
+  });
+});
+
+// Membership rule v2 against the real-shape member fixtures. Each shape gets a fresh cache key.
+describe("membership rule v2 (member shapes)", () => {
+  type Shape = (typeof shapes)[keyof typeof shapes];
+  const withShape = async (shape: Shape, envOverrides: Record<string, string> = {}) => {
+    await env.CACHE.delete(`ms:${shape.id}`);
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ data: shape }));
+    return getMembership({ ...env, ...envOverrides }, ctx(), shape.id);
+  };
+  const withStatus = (status: string): Shape => {
+    const s = structuredClone(shapes.freeActive);
+    s.planConnections[0].status = status;
+    return s;
+  };
+
+  it("free ACTIVE plan is active", async () => {
+    expect(await withShape(shapes.freeActive)).toEqual({ active: true, stale: false, email: "user-1@example.com" });
+  });
+
+  it("TRIALING is active", async () => {
+    expect(await withShape(withStatus("TRIALING"))).toMatchObject({ active: true, stale: false });
+  });
+
+  it("no plan connections is inactive", async () => {
+    expect(await withShape(shapes.noPlan)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("CANCELED is inactive", async () => {
+    expect(await withShape(shapes.canceled)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("REQUIRES_PAYMENT is inactive", async () => {
+    expect(await withShape(shapes.requiresPayment)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("PAST_DUE is inactive", async () => {
+    expect(await withShape(withStatus("PAST_DUE"))).toMatchObject({ active: false, stale: false });
+  });
+
+  it("mixed connections (ACTIVE free plus CANCELED) is active", async () => {
+    expect(await withShape(shapes.multipleConnections)).toMatchObject({ active: true, stale: false });
+  });
+
+  it("status compare is case-insensitive: 'active' matches the var ACTIVE", async () => {
+    expect(await withShape(withStatus("active"), { ACTIVE_PLAN_STATUSES: "ACTIVE" })).toMatchObject({ active: true });
   });
 });
 

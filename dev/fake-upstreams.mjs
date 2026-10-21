@@ -1,7 +1,7 @@
-// Fake Memberstack, Stripe, Webflow, Transistor and the yogaudio.com login page, for local dev. Node built-ins only.
+// Fake Memberstack, Stripe, Webflow and the yogaudio.com login page, for local dev. Node built-ins only.
 // Run: node dev/fake-upstreams.mjs   (port 8788)
 // Faults: FAKE_FAULT=slow|500|drop env var, `?fault=` on any request, or at runtime
-//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow|transistor]
+//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow]
 // State (deleted members, cancelled subscriptions) lives for the process; GET /_reset restores it.
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -11,13 +11,17 @@ const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8787";
 const KEYS = {
   memberstack: process.env.MEMBERSTACK_SECRET_KEY ?? "sk_fake_memberstack",
   webflow: process.env.WEBFLOW_TOKEN ?? "fake-webflow-token",
-  transistor: process.env.TRANSISTOR_API_KEY ?? "fake-transistor-key",
   stripe: process.env.STRIPE_RESTRICTED_KEY ?? "rk_fake_stripe",
 };
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const members = fixture("members.json");
-const webflow = fixture("webflow-items.json");
-const episodes = fixture("transistor-episodes.json");
+// Collection id (the top-level wrangler.toml vars) -> full Webflow v2 items/live response saved from the real site.
+const webflow = {
+  "fake-collection": fixture("webflow-classes.json"),
+  "fake-styles": fixture("webflow-styles.json"),
+  "fake-focus": fixture("webflow-focus-areas.json"),
+  "fake-durations": fixture("webflow-durations.json"),
+};
 const subsFixture = fixture("stripe-subscriptions.json");
 let subs = structuredClone(subsFixture);
 const deleted = new Set();
@@ -52,7 +56,9 @@ const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app lo
 <p id="app-login-msg"></p>
 <div data-app-login-form>
 <button data-t="fake-ms-token-active">Sign in as active member</button>
-<button data-t="fake-ms-token-inactive">Sign in as inactive member</button>
+<button data-t="fake-ms-token-noplan">Sign in as member with no plan</button>
+<button data-t="fake-ms-token-canceled">Sign in as canceled member</button>
+<button data-t="fake-ms-token-requires-payment">Sign in as requires-payment member</button>
 </div>
 <script>window.YOGAUDIO_CODE_URL = ${JSON.stringify(WORKER_URL + "/auth/code")};
 let cb;
@@ -137,24 +143,12 @@ createServer(async (req, res) => {
   if (wf && req.method === "GET") {
     if (await applyFault("webflow", url, req, res)) return;
     if (!auth("webflow", req.headers.authorization === `Bearer ${KEYS.webflow}`)) return;
-    // the item collection and the category collection are separate, as in a real Webflow site
-    const all = { "fake-collection": webflow.items, [webflow.categoryCollection]: webflow.categories }[wf[1]];
+    const all = webflow[wf[1]]?.items;
     if (!all) return send(res, 404, { message: "collection not found" });
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 100);
     const offset = Number(url.searchParams.get("offset") ?? 0);
-    // note: real "live" listing omits drafts; fixtures keep them so tests exercise the isDraft/isArchived flags
-    const items = all.slice(offset, offset + limit).map((i) => ({
-      cmsLocaleId: "loc_fake", lastPublished: "2026-01-01T00:00:00.000Z", lastUpdated: "2026-01-01T00:00:00.000Z", createdOn: "2026-01-01T00:00:00.000Z", ...i,
-    }));
+    const items = all.slice(offset, offset + limit);
     return send(res, 200, { items, pagination: { limit, offset, total: all.length } });
-  }
-
-  // Transistor API v1. https://developers.transistor.fm/#get-/v1/episodes/-id-
-  const tr = p.match(/^\/transistor\/v1\/episodes\/([^/]+)$/);
-  if (tr && req.method === "GET") {
-    if (await applyFault("transistor", url, req, res)) return;
-    if (!auth("transistor", req.headers["x-api-key"] === KEYS.transistor)) return;
-    return episodes[tr[1]] ? send(res, 200, { data: episodes[tr[1]] }) : send(res, 404, { message: "not found" });
   }
 
   send(res, 404, { message: "not found" });

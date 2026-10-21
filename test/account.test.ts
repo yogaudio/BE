@@ -42,6 +42,23 @@ beforeEach(async () => {
 });
 
 describe("POST /account/delete", () => {
+  it("is off (404 not_found, no outbound fetch) while STRIPE_RESTRICTED_KEY is empty", async () => {
+    const calls: string[] = [];
+    mockAccountUpstreams({ calls });
+    const key = env.STRIPE_RESTRICTED_KEY;
+    try {
+      for (const off of ["", undefined as unknown as string]) {
+        env.STRIPE_RESTRICTED_KEY = off;
+        const res = await del(IDS.inactive); // a member with no Stripe customer
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "not_found" });
+      }
+    } finally {
+      env.STRIPE_RESTRICTED_KEY = key;
+    }
+    expect(calls).toEqual([]);
+  });
+
   it("active member: 204, ordered calls, local data gone, others untouched", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
@@ -58,13 +75,13 @@ describe("POST /account/delete", () => {
     await kept(OTHER);
   });
 
-  it("past-due member: both live subscriptions cancelled", async () => {
-    await seed(IDS.pastDue);
+  it("canceled member: both live subscriptions cancelled", async () => {
+    await seed(IDS.canceled);
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
-    expect((await del(IDS.pastDue)).status).toBe(204);
+    expect((await del(IDS.canceled)).status).toBe(204);
     expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(2);
-    await cleaned(IDS.pastDue);
+    await cleaned(IDS.canceled);
   });
 
   it("inactive member (no Stripe customer): no Stripe calls, member deleted", async () => {

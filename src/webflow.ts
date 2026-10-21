@@ -2,22 +2,28 @@ import type { Env } from "./env";
 import { ApiError } from "./errors";
 import { upstreamFetch } from "./upstream";
 
-// A live CMS item with the WF_FIELD_* slugs already resolved. Values are raw (unknown) until normalizeCatalog.
-// `audio` is the raw audio field (a Transistor URL or episode id); Task 4 reads it, the catalog never does.
-export interface WebflowItem {
+// Field slugs of the real Webflow schema (not configurable).
+export const F = {
+  name: "name",
+  slug: "slug",
+  audio: "audio-file",
+  style: "style",
+  focusAreas: "focus-areas",
+  durations: "durations",
+  description: "description",
+  durationMinutes: "duration", // Durations collection: numeric minutes, null on some items
+} as const;
+
+// A live CMS item as Webflow returns it; fieldData values stay unknown until normalizeCatalog.
+export interface WebflowRawItem {
   id: string;
-  slug: string;
-  title: unknown;
-  duration: unknown;
-  category: unknown;
-  teacher: unknown;
-  image: unknown;
-  description: unknown;
-  audio: unknown;
+  fieldData: Record<string, unknown>;
 }
-export interface WebflowCategory {
-  id: string;
-  name: string;
+export interface WebflowCollections {
+  classes: WebflowRawItem[];
+  styles: WebflowRawItem[];
+  focusAreas: WebflowRawItem[];
+  durations: WebflowRawItem[];
 }
 interface RawItem {
   id?: unknown;
@@ -48,28 +54,12 @@ async function fetchLive(env: Env, collectionId: string): Promise<RawItem[]> {
   return out.filter((i) => !i.isDraft && !i.isArchived && typeof i.id === "string");
 }
 
-export async function loadWebflowItems(env: Env): Promise<WebflowItem[]> {
-  return (await fetchLive(env, env.WEBFLOW_COLLECTION_ID)).map((i) => {
-    const f = i.fieldData ?? {};
-    return {
-      id: i.id as string,
-      slug: String(f.slug ?? ""),
-      title: f[env.WF_FIELD_TITLE],
-      duration: f[env.WF_FIELD_DURATION],
-      category: f[env.WF_FIELD_CATEGORY],
-      teacher: f[env.WF_FIELD_TEACHER],
-      image: f[env.WF_FIELD_IMAGE],
-      description: f[env.WF_FIELD_DESCRIPTION],
-      audio: f[env.WF_FIELD_AUDIO],
-    };
-  });
-}
-
-// Reference fields hold item ids, so names come from the category collection. No collection id = no categories.
-export async function loadWebflowCategories(env: Env): Promise<WebflowCategory[]> {
-  if (!env.WF_CATEGORY_COLLECTION_ID) return [];
-  return (await fetchLive(env, env.WF_CATEGORY_COLLECTION_ID)).flatMap((i) => {
-    const name = i.fieldData?.name; // "name" is Webflow's built-in title field on every collection
-    return typeof name === "string" && name.trim() ? [{ id: i.id as string, name: name.trim() }] : [];
-  });
+// All four collections in parallel. Any failure rejects (502): a catalog with a missing option list would be wrong.
+export async function loadWebflowCollections(env: Env): Promise<WebflowCollections> {
+  const load = async (id: string) =>
+    (await fetchLive(env, id)).map((i): WebflowRawItem => ({ id: i.id as string, fieldData: i.fieldData ?? {} }));
+  const [classes, styles, focusAreas, durations] = await Promise.all(
+    [env.WEBFLOW_COLLECTION_ID, env.WF_STYLES_COLLECTION_ID, env.WF_FOCUS_COLLECTION_ID, env.WF_DURATIONS_COLLECTION_ID].map(load),
+  );
+  return { classes, styles, focusAreas, durations };
 }

@@ -1,0 +1,164 @@
+{
+  "freeActive": {
+    "id": "mem_fake_1",
+    "auth": {
+      "email": "user-1@example.com"
+    },
+    "createdAt": "2026-06-11T17:53:58.547Z",
+    "metaData": {},
+    "customFields": {},
+    "permissions": [],
+    "loginRedirect": null,
+    "verified": true,
+    "lastLogin": "2026-06-18T18:13:46.522Z",
+    "profileImage": null,
+    "stripeCustomerId": null,
+    "planConnections": [
+      {
+        "id": "con_fake_1_null",
+        "active": true,
+        "status": "ACTIVE",
+        "planId": "pln_free-plan-6aap0jr6",
+        "planName": "Free Plan",
+        "type": "FREE",
+        "payment": null
+      }
+    ]
+  },
+  "noPlan": {
+    "id": "mem_fake_2",
+    "auth": {
+      "email": "user-2@example.com"
+    },
+    "createdAt": "2026-06-04T17:01:22.997Z",
+    "metaData": {},
+    "customFields": {},
+    "permissions": [],
+    "loginRedirect": null,
+    "verified": false,
+    "lastLogin": "2026-06-04T17:01:22.995Z",
+    "profileImage": null,
+    "stripeCustomerId": "cus_fake_2",
+    "planConnections": []
+  },
+  "canceled": {
+    "id": "mem_fake_3",
+    "auth": {
+      "email": "user-3@example.com"
+    },
+    "createdAt": "2026-07-02T13:55:31.988Z",
+    "metaData": {},
+    "customFields": {},
+    "permissions": [],
+    "loginRedirect": null,
+    "verified": true,
+    "lastLogin": "2026-07-24T03:28:07.623Z",
+    "profileImage": null,
+    "stripeCustomerId": "cus_fake_3",
+    "planConnections": [
+      {
+        "id": "con_fake_3_null",
+        "active": false,
+        "status": "CANCELED",
+        "planId": "pln_monthly-3rc0sgh",
+        "planName": "Monthly",
+        "type": "SUBSCRIPTION",
+        "payment": {
+          "stripeSubscriptionId": null,
+          "priceId": "prc_monthly-by5p0eld",
+          "amount": 12,
+          "currency": "usd",
+          "status": "PAID",
+          "lastBillingDate": 1783000609,
+          "nextBillingDate": null,
+          "cancelAtDate": null,
+          "pauseCollection": null,
+          "pauseResumeAt": null
+        }
+      }
+    ]
+  },
+  "requiresPayment": {
+    "id": "mem_fake_4",
+    "auth": {
+      "email": "user-4@example.com"
+    },
+    "createdAt": "2026-09-11T16:25:37.311Z",
+    "metaData": {},
+    "customFields": {},
+    "permissions": [],
+    "loginRedirect": null,
+    "verified": true,
+    "lastLogin": "2026-10-20T22:37:01.313Z",
+    "profileImage": null,
+    "stripeCustomerId": "cus_fake_4",
+    "planConnections": [
+      {
+        "id": "con_fake_4_null",
+        "active": false,
+        "status": "REQUIRES_PAYMENT",
+        "planId": "pln_monthly-3rc0sgh",
+        "planName": "Monthly",
+        "type": "SUBSCRIPTION",
+        "payment": {
+          "stripeSubscriptionId": "sub_fake_4_x",
+          "priceId": "prc_monthly-with-free-trail-wi1l40tgi",
+          "amount": 12,
+          "currency": "usd",
+          "status": "REQUIRES_PAYMENT",
+          "lastBillingDate": 1792344443,
+          "nextBillingDate": 1795019195,
+          "cancelAtDate": 1795019195,
+          "pauseCollection": null,
+          "pauseResumeAt": null
+        }
+      }
+    ]
+  },
+  "multipleConnections": {
+    "id": "mem_fake_5",
+    "auth": {
+      "email": "user-5@example.com"
+    },
+    "createdAt": "2026-06-03T22:24:26.181Z",
+    "metaData": {},
+    "customFields": {},
+    "permissions": [],
+    "loginRedirect": null,
+    "verified": true,
+    "lastLogin": "2026-10-12T21:42:55.838Z",
+    "profileImage": null,
+    "stripeCustomerId": "cus_fake_5",
+    "planConnections": [
+      {
+        "id": "con_fake_5_a",
+        "active": false,
+        "status": "CANCELED",
+        "planId": "pln_monthly-3rc0sgh",
+        "planName": "Monthly",
+        "type": "SUBSCRIPTION",
+        "payment": {
+          "stripeSubscriptionId": null,
+          "priceId": "prc_monthly-by5p0eld",
+          "amount": 12,
+          "currency": "usd",
+          "status": "PAID",
+          "lastBillingDate": null,
+          "nextBillingDate": null,
+          "cancelAtDate": null,
+          "pauseCollection": null,
+          "pauseResumeAt": null
+        }
+      },
+      {
+        "id": "con_fake_5_b",
+        "active": true,
+        "status": "ACTIVE",
+        "planId": "pln_free-plan-6aap0jr6",
+        "planName": "Free Plan",
+        "type": "FREE",
+        "payment": null
+      }
+    ]
+  }
+}
