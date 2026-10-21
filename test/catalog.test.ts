@@ -113,7 +113,7 @@ describe("normalizeCatalog", () => {
 
 // --- GET /catalog ---
 
-const TOKEN = () => signAccessToken(env, "mem_fake_active");
+const TOKEN = () => signAccessToken(env, "mem_fake_1");
 async function get(headers: Record<string, string> = {}, e = env) {
   const ctx = createExecutionContext();
   const res = await route(new Request("https://api.test/catalog", { headers }), e, ctx);

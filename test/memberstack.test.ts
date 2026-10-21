@@ -13,7 +13,7 @@ beforeEach(async () => {
 describe("getMembership", () => {
   it("active, inactive and past-due fixtures", async () => {
     mockMemberstack();
-    expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "active@example.test" });
+    expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "user-1@example.com" });
     expect(await getMembership(env, ctx(), IDS.inactive)).toMatchObject({ active: false, stale: false });
     expect(await getMembership(env, ctx(), IDS.pastDue)).toMatchObject({ active: false, stale: false });
   });
@@ -22,7 +22,7 @@ describe("getMembership", () => {
     mockMemberstack();
     expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_other" }, ctx(), IDS.active)).active).toBe(false);
     await env.CACHE.delete(`ms:${IDS.active}`);
-    expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_x, pln_fake_monthly" }, ctx(), IDS.active)).active).toBe(true);
+    expect((await getMembership({ ...env, ALLOWED_PLAN_IDS: "pln_x, pln_free-plan-6aap0jr6" }, ctx(), IDS.active)).active).toBe(true);
   });
 
   it("a fresh cache entry makes no fetch", async () => {
@@ -45,12 +45,12 @@ describe("getMembership", () => {
 
   describe("stale membership fallback", () => {
     const seed = (ageMs: number) =>
-      env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "active@example.test", at: Date.now() - ageMs }));
+      env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - ageMs }));
 
     it("uses a cached entry under 24h old when Memberstack is down, marked stale", async () => {
       await seed(2 * 3600_000);
       mockMemberstack({ down: true });
-      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: true, email: "active@example.test" });
+      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: true, email: "user-1@example.com" });
     });
 
     it("throws upstream_unavailable over 24h old or with no cache", async () => {
@@ -62,10 +62,10 @@ describe("getMembership", () => {
     });
 
     it("a fresh inactive entry is rechecked, so a renewal unlocks at once", async () => {
-      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "active@example.test", at: Date.now() - 60_000 }));
+      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "user-1@example.com", at: Date.now() - 60_000 }));
       const calls: string[] = [];
       mockMemberstack({ calls });
-      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: false, email: "active@example.test" });
+      expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: false, email: "user-1@example.com" });
       expect(calls).toHaveLength(1);
     });
 

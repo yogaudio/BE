@@ -15,7 +15,13 @@ const KEYS = {
 };
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const members = fixture("members.json");
-const webflow = fixture("webflow-items.json");
+// Collection id (the top-level wrangler.toml vars) -> full Webflow v2 items/live response saved from the real site.
+const webflow = {
+  "fake-collection": fixture("webflow-classes.json"),
+  "fake-styles": fixture("webflow-styles.json"),
+  "fake-focus": fixture("webflow-focus-areas.json"),
+  "fake-durations": fixture("webflow-durations.json"),
+};
 const subsFixture = fixture("stripe-subscriptions.json");
 let subs = structuredClone(subsFixture);
 const deleted = new Set();
@@ -50,7 +56,9 @@ const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app lo
 <p id="app-login-msg"></p>
 <div data-app-login-form>
 <button data-t="fake-ms-token-active">Sign in as active member</button>
-<button data-t="fake-ms-token-inactive">Sign in as inactive member</button>
+<button data-t="fake-ms-token-noplan">Sign in as member with no plan</button>
+<button data-t="fake-ms-token-canceled">Sign in as canceled member</button>
+<button data-t="fake-ms-token-requires-payment">Sign in as requires-payment member</button>
 </div>
 <script>window.YOGAUDIO_CODE_URL = ${JSON.stringify(WORKER_URL + "/auth/code")};
 let cb;
@@ -135,15 +143,11 @@ createServer(async (req, res) => {
   if (wf && req.method === "GET") {
     if (await applyFault("webflow", url, req, res)) return;
     if (!auth("webflow", req.headers.authorization === `Bearer ${KEYS.webflow}`)) return;
-    // the item collection and the category collection are separate, as in a real Webflow site
-    const all = { "fake-collection": webflow.items, [webflow.categoryCollection]: webflow.categories }[wf[1]];
+    const all = webflow[wf[1]]?.items;
     if (!all) return send(res, 404, { message: "collection not found" });
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 100);
     const offset = Number(url.searchParams.get("offset") ?? 0);
-    // note: real "live" listing omits drafts; fixtures keep them so tests exercise the isDraft/isArchived flags
-    const items = all.slice(offset, offset + limit).map((i) => ({
-      cmsLocaleId: "loc_fake", lastPublished: "2026-01-01T00:00:00.000Z", lastUpdated: "2026-01-01T00:00:00.000Z", createdOn: "2026-01-01T00:00:00.000Z", ...i,
-    }));
+    const items = all.slice(offset, offset + limit);
     return send(res, 200, { items, pagination: { limit, offset, total: all.length } });
   }
 

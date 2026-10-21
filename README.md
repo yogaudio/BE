@@ -13,13 +13,13 @@ npm run dev                      # terminal 2: applies local D1 migrations, runs
 
 Try `curl localhost:8787/health` and open http://localhost:8788/app-login.
 
-Fake auth: Memberstack `X-API-KEY`, Stripe `Authorization: Bearer rk_fake_stripe`, Webflow `Authorization: Bearer`; a wrong key gets 401. Fake member tokens: `fake-ms-token-active`, `fake-ms-token-inactive`, `fake-ms-token-pastdue`. Fixtures live in `dev/fixtures/`.
+Fake auth: Memberstack `X-API-KEY`, Stripe `Authorization: Bearer rk_fake_stripe`, Webflow `Authorization: Bearer`; a wrong key gets 401. Fake member tokens: `fake-ms-token-active` (free ACTIVE), `fake-ms-token-noplan`, `fake-ms-token-canceled`, `fake-ms-token-requires-payment`. Fixtures live in `dev/fixtures/`.
 
 Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request, or at runtime `curl 'localhost:8788/_fault?mode=500&service=webflow'` (`mode=off` clears; services: memberstack, stripe, webflow). The fakes keep state (deleted members, cancelled subscriptions) for the process; `curl localhost:8788/_reset` restores it.
 
 ## Config
 
-Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production collection id and the production D1/KV ids are `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
+Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production collection id and the production D1/KV ids are `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
 
 Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `STRIPE_RESTRICTED_KEY`, `TOKEN_SIGNING_KEY`.
 
@@ -32,8 +32,6 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 Everything that is still a placeholder or an unchecked guess before the first production deploy.
 
 Placeholders (`SET_IN_TASK_10`):
-- `wrangler.toml:51` `WEBFLOW_COLLECTION_ID`: the Webflow classes collection id.
-- `wrangler.toml:53` `WF_CATEGORY_COLLECTION_ID`: the category collection id (empty string = no categories).
 - `wrangler.toml:65` production D1 `database_id`, `wrangler.toml:70` production KV `id` (see below).
 - `login-page/app-login.html:8` `window.YOGAUDIO_CODE_URL`: the deployed Worker URL ending in `/auth/code`.
 
@@ -42,7 +40,7 @@ Placeholders (`SET_IN_TASK_10`):
 - `src/memberstack.ts:54` `getStripeCustomerId` member field name `stripeCustomerId`; `src/memberstack.ts:65` `deleteMember` delete endpoint and whether it cancels Stripe itself.
 - `src/stripe.ts:23` subscription list response for a deleted customer (assumed 404; a 400 with `error.code` `resource_missing` is also treated as "customer gone"). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:49`, already `https://api.stripe.com`) are listed in the steps below.
 - `src/webflow.ts:33` Webflow v2 items response shape.
-- `wrangler.toml:52` the real Webflow field slugs: `WF_FIELD_TITLE`, `WF_FIELD_DURATION`, `WF_FIELD_CATEGORY`, `WF_FIELD_TEACHER`, `WF_FIELD_IMAGE`, `WF_FIELD_DESCRIPTION` (each names the CMS field the Worker reads for that value), plus `WF_CATEGORY_COLLECTION_ID`.
+- The four Webflow collection ids (`WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`) in `[env.production.vars]` and the field slugs in `src/catalog.ts` against the live site.
 - `login-page/app-login.html:13` the Memberstack DOM calls (`$memberstackDom`, `getCurrentMember`, `onAuthChange`, `getMemberCookie`); `login-page/README.md:12` whether "redirect after login" can be turned off for one page.
 
 Steps:

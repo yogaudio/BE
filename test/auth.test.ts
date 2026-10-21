@@ -71,7 +71,7 @@ describe("POST /auth/exchange", () => {
     const r = await exchange(code);
     expect(r.status).toBe(200);
     const b = (await r.json()) as any;
-    expect(b).toMatchObject({ accessTokenExpiresIn: 900, member: { id: IDS.active, email: "active@example.test" }, active: true });
+    expect(b).toMatchObject({ accessTokenExpiresIn: 900, member: { id: IDS.active, email: "user-1@example.com" }, active: true });
     expect(b.accessToken.split(".")).toHaveLength(3);
     const rows = (await env.DB.prepare("SELECT * FROM refresh_tokens").all<any>()).results;
     expect(rows).toHaveLength(1);
@@ -83,7 +83,7 @@ describe("POST /auth/exchange", () => {
   });
 
   it("an inactive member still gets tokens with active:false", async () => {
-    const b = await signedIn("fake-ms-token-inactive");
+    const b = await signedIn("fake-ms-token-canceled");
     expect(b.active).toBe(false);
     expect(b.accessToken).toBeTruthy();
   });
@@ -131,7 +131,7 @@ describe("POST /auth/refresh", () => {
     const r = await post("/auth/refresh", { refreshToken: first.refreshToken });
     expect(r.status).toBe(200);
     const second = (await r.json()) as any;
-    expect(second).toMatchObject({ member: { id: IDS.active, email: "active@example.test" }, active: true, accessTokenExpiresIn: 900 });
+    expect(second).toMatchObject({ member: { id: IDS.active, email: "user-1@example.com" }, active: true, accessTokenExpiresIn: 900 });
     expect(second.refreshToken).not.toBe(first.refreshToken);
     const old = await post("/auth/refresh", { refreshToken: first.refreshToken });
     expect([old.status, await err(old)]).toEqual([401, "invalid_grant"]);
@@ -162,18 +162,18 @@ describe("POST /auth/refresh", () => {
   it("re-checks membership: a lapsed member gets active:false", async () => {
     const first = await signedIn();
     await env.CACHE.delete(`ms:${IDS.active}`);
-    mockMemberstack({ overrides: { planConnections: [{ planId: "pln_fake_monthly", status: "CANCELED" }] } });
+    mockMemberstack({ overrides: { planConnections: [{ planId: "pln_free-plan-6aap0jr6", status: "CANCELED" }] } });
     const b = (await (await post("/auth/refresh", { refreshToken: first.refreshToken })).json()) as any;
     expect(b.active).toBe(false);
   });
 
   it("stale membership fallback: Memberstack down, cache under 24h, member keeps the session", async () => {
     const first = await signedIn();
-    await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "active@example.test", at: Date.now() - 3 * 3600_000 }));
+    await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - 3 * 3600_000 }));
     mockMemberstack({ down: true });
     const r = await post("/auth/refresh", { refreshToken: first.refreshToken });
     expect(r.status).toBe(200);
-    expect(await r.json()).toMatchObject({ active: true, member: { email: "active@example.test" } });
+    expect(await r.json()).toMatchObject({ active: true, member: { email: "user-1@example.com" } });
   });
 
   it("502 and the token is not burned when Memberstack is down with no usable cache", async () => {

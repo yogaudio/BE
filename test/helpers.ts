@@ -24,7 +24,7 @@ export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overri
   });
 }
 
-export const IDS = { active: "mem_fake_active", inactive: "mem_fake_inactive", pastDue: "mem_fake_pastdue" };
+export const IDS = { active: "mem_fake_1", noPlan: "mem_fake_2", inactive: "mem_fake_2", pastDue: "mem_fake_3" };
 
 // Fake Webflow Data API on top of globalThis.fetch, same shapes as dev/fake-upstreams.mjs.
 // `pageSize` caps items per page (real Webflow caps at 100) so pagination is testable with the small fixture.
