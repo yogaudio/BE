@@ -42,6 +42,23 @@ beforeEach(async () => {
 });
 
 describe("POST /account/delete", () => {
+  it("is off (404 not_found, no outbound fetch) while STRIPE_RESTRICTED_KEY is empty", async () => {
+    const calls: string[] = [];
+    mockAccountUpstreams({ calls });
+    const key = env.STRIPE_RESTRICTED_KEY;
+    try {
+      for (const off of ["", undefined as unknown as string]) {
+        env.STRIPE_RESTRICTED_KEY = off;
+        const res = await del(IDS.inactive); // a member with no Stripe customer
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "not_found" });
+      }
+    } finally {
+      env.STRIPE_RESTRICTED_KEY = key;
+    }
+    expect(calls).toEqual([]);
+  });
+
   it("active member: 204, ordered calls, local data gone, others untouched", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
