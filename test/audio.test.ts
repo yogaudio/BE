@@ -44,11 +44,12 @@ describe("GET /play/:classId", () => {
     expect(await res.json()).toEqual({ url: "https://media.transistor.fm/00a90e00/36cad4bf.mp3", durationSec: 1800, expiresAt: null });
   });
 
-  it("makes no outbound fetch to any Transistor host", async () => {
-    const calls: string[] = [];
-    mockAll({ calls });
+  it("fetches only the Memberstack and Webflow fake hosts; never a Transistor host", async () => {
+    const spy = mockAll();
     expect((await play("6ad7b26d1bf051ee351944a3")).status).toBe(200);
-    expect(calls.filter((c) => /transistor/i.test(c))).toEqual([]);
+    const hosts = spy.mock.calls.map(([input]) => new URL(input instanceof Request ? input.url : String(input)).host);
+    expect(hosts.length).toBeGreaterThan(0);
+    expect(new Set(hosts)).toEqual(new Set(["localhost:8788"])); // allowlist: the local fake base (wrangler.toml)
   });
 
   it("an inactive member is 403 membership_inactive", async () => {
