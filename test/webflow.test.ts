@@ -1,64 +1,47 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadWebflowCategories, loadWebflowItems } from "../src/webflow";
+import { loadWebflowCollections } from "../src/webflow";
 import { mockWebflow } from "./helpers";
 
 beforeEach(() => vi.restoreAllMocks());
 
-describe("loadWebflowItems", () => {
-  it("follows offset across 3 pages with limit 100", async () => {
+describe("loadWebflowCollections", () => {
+  it("loads the four collections from their ids, following offset across pages", async () => {
     const calls: string[] = [];
-    mockWebflow({ pageSize: 4, calls });
-    const items = await loadWebflowItems(env);
-    expect(calls).toHaveLength(3);
-    expect(calls.every((c) => c.includes("/v2/collections/fake-collection/items/live") && c.includes("limit=100"))).toBe(true);
-    expect(calls.map((c) => new URL(`http://x${c}`).searchParams.get("offset"))).toEqual(["0", "4", "8"]);
-    expect(items.map((i) => i.id)).toContain("wf_good_1");
-    expect(items.map((i) => i.id)).toContain("wf_bad_no_audio"); // last page was read
+    mockWebflow({ pageSize: 20, calls });
+    const raw = await loadWebflowCollections(env);
+    expect(raw.classes).toHaveLength(52);
+    expect(raw.styles).toHaveLength(7);
+    expect(raw.focusAreas).toHaveLength(18);
+    expect(raw.durations).toHaveLength(10);
+    expect(calls.every((c) => c.includes("limit=100"))).toBe(true);
+    const classCalls = calls.filter((c) => c.includes("/collections/fake-collection/"));
+    expect(classCalls.map((c) => new URL(`http://x${c}`).searchParams.get("offset"))).toEqual(["0", "20", "40"]);
+    for (const id of ["fake-styles", "fake-focus", "fake-durations"]) expect(calls.some((c) => c.includes(`/collections/${id}/`))).toBe(true);
   });
 
-  it("skips drafts and archived items, keeps Webflow order, exposes the raw audio field", async () => {
-    mockWebflow();
-    const items = await loadWebflowItems(env);
-    const ids = items.map((i) => i.id);
-    expect(ids).not.toContain("wf_bad_draft");
-    expect(ids).not.toContain("wf_bad_archived");
-    expect(ids.slice(0, 4)).toEqual(["wf_good_1", "wf_good_2", "wf_good_3", "wf_transistor_id"]);
-    expect(items[0]).toMatchObject({ slug: "sample-class-1", title: "Sample class 1", audio: expect.stringContaining("media.transistor.fm") });
-    expect(items.find((i) => i.id === "wf_transistor_id")!.audio).toBe("ep_fake_1");
+  it("skips drafts and archived items, keeps Webflow order, exposes id and fieldData", async () => {
+    const mk = (id: string, o: object = {}) => ({ id, isDraft: false, isArchived: false, fieldData: { name: id }, ...o });
+    mockWebflow({ collections: {
+      "fake-collection": [mk("a"), mk("b", { isDraft: true }), mk("c", { isArchived: true }), mk("d")],
+      "fake-styles": [], "fake-focus": [], "fake-durations": [],
+    } });
+    const raw = await loadWebflowCollections(env);
+    expect(raw.classes.map((i) => i.id)).toEqual(["a", "d"]);
+    expect(raw.classes[0]).toMatchObject({ id: "a", fieldData: { name: "a" } });
   });
 
-  it("reads field slugs from the WF_FIELD_* vars", async () => {
-    mockWebflow({ collections: { "fake-collection": [{ id: "a", isDraft: false, isArchived: false, fieldData: { slug: "s", headline: "T", mp3: "x" } }] } });
-    const [i] = await loadWebflowItems({ ...env, WF_FIELD_TITLE: "headline", WF_FIELD_AUDIO: "mp3" });
-    expect(i).toMatchObject({ title: "T", audio: "x" });
-  });
-
-  it("Webflow 5xx, 4xx or network failure is 502", async () => {
-    for (const status of [500, 401]) {
+  it("a failure on any one collection (5xx, 4xx, network) is 502", async () => {
+    for (const failCollection of ["fake-collection", "fake-styles", "fake-focus", "fake-durations"]) {
       vi.restoreAllMocks();
-      mockWebflow({ status });
-      await expect(loadWebflowItems(env)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+      mockWebflow({ failCollection });
+      await expect(loadWebflowCollections(env), failCollection).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
     }
     vi.restoreAllMocks();
+    mockWebflow({ status: 401 });
+    await expect(loadWebflowCollections(env)).rejects.toMatchObject({ status: 502 });
+    vi.restoreAllMocks();
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
-    await expect(loadWebflowItems(env)).rejects.toMatchObject({ status: 502 });
-  });
-});
-
-describe("loadWebflowCategories", () => {
-  it("maps category item ids to names", async () => {
-    mockWebflow();
-    expect(await loadWebflowCategories(env)).toEqual([
-      { id: "cat_gentle", name: "Gentle Flow" },
-      { id: "cat_evening", name: "Evening Wind Down" },
-      { id: "cat_morning", name: "Morning Energy" },
-    ]);
-  });
-
-  it("is empty with no fetch when WF_CATEGORY_COLLECTION_ID is empty", async () => {
-    const spy = mockWebflow();
-    expect(await loadWebflowCategories({ ...env, WF_CATEGORY_COLLECTION_ID: "" })).toEqual([]);
-    expect(spy).not.toHaveBeenCalled();
+    await expect(loadWebflowCollections(env)).rejects.toMatchObject({ status: 502 });
   });
 });
