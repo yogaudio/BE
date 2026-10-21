@@ -1,0 +1,1365 @@
+{
+  "items": [
+    {
+      "id": "6ad7b26d1bf051ee351944a3",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-20T18:26:53.947Z",
+      "lastUpdated": "2026-10-20T18:26:53.947Z",
+      "createdOn": "2026-10-20T18:26:53.947Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/00a90e00/36cad4bf.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 52,
+        "name": "#52 Slow Flow: Mellow and Low",
+        "slug": "52-slow-flow-mellow-and-low"
+      }
+    },
+    {
+      "id": "6ad26da19f5530e249544bf6",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-16T18:35:50.871Z",
+      "lastUpdated": "2026-10-16T18:35:50.871Z",
+      "createdOn": "2026-10-16T18:32:01.303Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "6ad26db49aa98f6d8d3667e3"
+        ],
+        "focus-areas": [
+          "6ad26e659aa98f6d8d36ba13"
+        ],
+        "audio-file": "https://media.transistor.fm/1a6c47fd/d6e6d03a.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 51,
+        "name": "#51 Guided Visualization: A Walk Through the Woods",
+        "slug": "51-psychic-travel-a-walk-through-the-woods"
+      }
+    },
+    {
+      "id": "6ace6cfc6b07c8534c468612",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-13T17:40:12.079Z",
+      "lastUpdated": "2026-10-13T17:40:12.079Z",
+      "createdOn": "2026-10-13T17:40:12.079Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da61bb02402c70a6b79ee",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8",
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/af376322/cdec830f.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 50,
+        "name": "#50 Slow Flow + Yoga Nidra: Self Love",
+        "slug": "50-slow-flow-yoga-nidra-self-love"
+      }
+    },
+    {
+      "id": "6ac92e6eb3061fe51d13e366",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-09T18:13:15.239Z",
+      "lastUpdated": "2026-10-09T18:13:15.239Z",
+      "createdOn": "2026-10-09T18:11:58.595Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6ac92e7a34b33983c07944c5",
+          "6ac92e9067bfc3c29fffff32"
+        ],
+        "audio-file": "https://media.transistor.fm/d40b5f6d/f02f4f9c.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 49,
+        "name": "#49 Vinyasa: Quads Focus",
+        "slug": "49-vinyasa-quads-focus"
+      }
+    },
+    {
+      "id": "6ac53309f2da3c0a08ffd6db",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-06T17:42:33.555Z",
+      "lastUpdated": "2026-10-06T17:42:33.555Z",
+      "createdOn": "2026-10-06T17:42:33.555Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/9951ed28/428d83cf.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 47,
+        "name": "#48 Yoga Nidra: Let Go of Shame",
+        "slug": "48-yoga-nidra-let-go-of-shame"
+      }
+    },
+    {
+      "id": "6abfe8929861361ca8b6872d",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-10-02T17:23:45.794Z",
+      "lastUpdated": "2026-10-02T17:23:45.794Z",
+      "createdOn": "2026-10-02T17:23:30.464Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b14819407ae87ddf0cac"
+        ],
+        "audio-file": "https://media.transistor.fm/54b166cd/dfa54a0f.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 47,
+        "name": "#47 Vinyasa: Lengthen Your Torso",
+        "slug": "47-vinyasa-lengthen-your-torsp"
+      }
+    },
+    {
+      "id": "6abbff5f2f88e4d53f4beff6",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-29T18:16:19.492Z",
+      "lastUpdated": "2026-09-29T18:16:19.492Z",
+      "createdOn": "2026-09-29T18:11:43.551Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f647d3a70d4b281fd02"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/64a4e71b/941ef018.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 46,
+        "name": "#46 Restorative: No Props Needed",
+        "slug": "46-restorative-propless"
+      }
+    },
+    {
+      "id": "6ab6b76773acaf35ec29b00e",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-25T18:03:19.126Z",
+      "lastUpdated": "2026-09-25T18:03:19.126Z",
+      "createdOn": "2026-09-25T18:03:19.126Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/73ff9215/bd81dd79.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 45,
+        "name": "#45 Slow Flow: Stay Low",
+        "slug": "45-slow-flow-stay-low"
+      }
+    },
+    {
+      "id": "6ab2925a08aaac18e7ed9ed1",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-22T14:39:19.542Z",
+      "lastUpdated": "2026-09-22T14:39:19.542Z",
+      "createdOn": "2026-09-22T14:36:10.018Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "6ab2926d210239843f088885"
+        ],
+        "audio-file": "https://media.transistor.fm/ffeccbfc/1d04bdd9.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 44,
+        "name": "#44 Yoga Nidra: Find Contentment",
+        "slug": "44-yoga-nidra-find-contentment"
+      }
+    },
+    {
+      "id": "6aad7391920c8cdb55573055",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-18T17:23:29.423Z",
+      "lastUpdated": "2026-09-18T17:23:29.423Z",
+      "createdOn": "2026-09-18T17:23:29.423Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da61bb02402c70a6b79ee",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/042f221b/2dc6d0d2.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 43,
+        "name": "#43 Vinyasa: Colored Vinyasa",
+        "slug": "43-vinyasa-colored-vinyasa"
+      }
+    },
+    {
+      "id": "6aa987945b42a41afcf0f03e",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-18T17:18:35.774Z",
+      "lastUpdated": "2026-09-18T17:18:35.774Z",
+      "createdOn": "2026-09-15T17:59:48.787Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/0b664251/e8df0f32.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 42,
+        "name": "#42 Vinyasa: Good Morning Vinyasa",
+        "slug": "42-vinyasa-good-morning-vinyasa"
+      }
+    },
+    {
+      "id": "6aa445e6e5c6e2d649dfc3fa",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-14T19:39:04.345Z",
+      "lastUpdated": "2026-09-11T18:18:47.853Z",
+      "createdOn": "2026-09-11T18:18:14.467Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "6aa445f1df7cc013ad7a0bb6"
+        ],
+        "audio-file": "https://media.transistor.fm/f3887c3d/f4101747.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 41,
+        "name": "#41 Yoga Nidra: Moving Through Grief",
+        "slug": "41-yoga-nidra-moving-through-grief"
+      }
+    },
+    {
+      "id": "6aa05613190dce9dfbd9e96f",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-08T18:38:11.028Z",
+      "lastUpdated": "2026-09-08T18:38:11.028Z",
+      "createdOn": "2026-09-08T18:38:11.028Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "69df9fad4e27dd6bfb04d83e",
+          "6a15b1e8d8d6218ac4390116"
+        ],
+        "audio-file": "https://media.transistor.fm/0bd1c97d/d836d81b.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 40,
+        "name": "#40 Slow Flow: Hips and Hamstrings",
+        "slug": "40-slow-flow-hips-and-hamstrings"
+      }
+    },
+    {
+      "id": "6a9acfa653e5df0046688586",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-04T16:32:09.503Z",
+      "lastUpdated": "2026-09-04T14:03:32.477Z",
+      "createdOn": "2026-09-04T14:03:18.112Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a9acf1ca127967c7c69f7c0",
+          "6a9acf7fb35db938d1ed5e32"
+        ],
+        "audio-file": "https://media.transistor.fm/d3191155/1fdacf59.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 39,
+        "name": "#39 Vinyasa: Heart Chakra",
+        "slug": "39-vinyasa-heart-chakra"
+      }
+    },
+    {
+      "id": "6a95e1346d550cec545ed3d4",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-09-04T16:32:09.503Z",
+      "lastUpdated": "2026-09-01T17:00:01.524Z",
+      "createdOn": "2026-08-31T20:16:52.193Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a241057f67452b10ceb86d2",
+        "style": [
+          "6a95e0bbcf2c274a10cd42a7"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/e7bfa99e/1eaf61d4.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 38,
+        "name": "#38 Desk Yoga",
+        "slug": "38-desk-yoga"
+      }
+    },
+    {
+      "id": "6a91759b417cc6ac5fa7bc19",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-28T17:00:01.299Z",
+      "lastUpdated": "2026-08-28T17:00:01.299Z",
+      "createdOn": "2026-08-28T11:48:43.075Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f599ea1afca33119640"
+        ],
+        "focus-areas": [
+          "6a15b1e8d8d6218ac4390116"
+        ],
+        "audio-file": "https://media.transistor.fm/5378e91c/683bf766.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 37,
+        "name": "#37 Yin: Hamstrings",
+        "slug": "37-yin-hamstrings"
+      }
+    },
+    {
+      "id": "6a8d8a052cc14fab9bb0eaf6",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-25T17:21:39.946Z",
+      "lastUpdated": "2026-08-25T17:21:39.946Z",
+      "createdOn": "2026-08-25T12:26:45.024Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "6a15b08c39e7394b69405fc1"
+        ],
+        "audio-file": "https://media.transistor.fm/b3f98e57/3ea56fec.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 36,
+        "name": "#36 Slow Flow: Four Spinal Movements",
+        "slug": "36-slow-flow-four-spinal-movements"
+      }
+    },
+    {
+      "id": "6a875d74653d4efcbcab2edb",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-25T16:01:04.270Z",
+      "lastUpdated": "2026-08-21T17:30:01.955Z",
+      "createdOn": "2026-08-20T20:03:00.854Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9fc51394a72ccd102cc6"
+        ],
+        "audio-file": "https://media.transistor.fm/fefb7386/34a1a811.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 35,
+        "name": "#35 Yoga Nidra: Work Break",
+        "slug": "35-yoga-nidra-work-break"
+      }
+    },
+    {
+      "id": "6a84441bbdf283f3d98dc7bb",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-18T11:38:03.612Z",
+      "lastUpdated": "2026-08-18T11:38:03.612Z",
+      "createdOn": "2026-08-18T11:38:03.612Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/8fc29b26/adf96ec5.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 34,
+        "name": "#34 Vinyasa: Quick Foundations",
+        "slug": "34-vinyasa-quick-foundations"
+      }
+    },
+    {
+      "id": "6a7f39be5bc0b23b2258f4b7",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-25T16:01:04.270Z",
+      "lastUpdated": "2026-08-14T15:53:32.485Z",
+      "createdOn": "2026-08-14T15:52:30.011Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a50568af627cd8be4169970",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "6a7f39e3c3505c21b900dd08"
+        ],
+        "audio-file": "https://media.transistor.fm/74629ed7/0ed67601.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 33,
+        "name": "#33 Yoga Nidra: Anxiety Relief",
+        "slug": "33-yoga-nidra-anxiety-relief"
+      }
+    },
+    {
+      "id": "6a7b7d35830bd6da5ec8a031",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-11T19:51:17.911Z",
+      "lastUpdated": "2026-08-11T19:51:17.911Z",
+      "createdOn": "2026-08-11T19:51:17.911Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "69df9fe334067da98e5e95d4"
+        ],
+        "audio-file": "https://media.transistor.fm/6c131b63/4df2c7df.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 32,
+        "name": "#32 Slow Flow: Grounding",
+        "slug": "32-slow-flow-grounding"
+      }
+    },
+    {
+      "id": "6a75e891a7eb3ef12972ea58",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-07T14:15:45.645Z",
+      "lastUpdated": "2026-08-07T14:15:45.645Z",
+      "createdOn": "2026-08-07T14:15:45.645Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b14819407ae87ddf0cac"
+        ],
+        "audio-file": "https://media.transistor.fm/d5da319a/30d55155.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 31,
+        "name": "#31 Vinyasa: Core + Balance",
+        "slug": "31-vinyasa-core-balance"
+      }
+    },
+    {
+      "id": "6a723a151ccf3265b28395a5",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-13T11:06:32.223Z",
+      "lastUpdated": "2026-08-07T14:15:54.706Z",
+      "createdOn": "2026-08-04T19:14:29.850Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/4745bc37/4fbabf50.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 30,
+        "name": "#30 Yoga Nidra: Restful Sleep",
+        "slug": "30-yoga-nidra-restful-sleep"
+      }
+    },
+    {
+      "id": "6a6cdf74b5a4fafeed62b2ff",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:43.566Z",
+      "lastUpdated": "2026-08-01T21:46:43.566Z",
+      "createdOn": "2026-07-31T17:46:28.622Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/a148bef2/c18a60b7.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 29,
+        "name": "#29 Yoga Nidra: Chakra Focus",
+        "slug": "29-yoga-nidra-chakra-focus"
+      }
+    },
+    {
+      "id": "6a690ccf757f79962871868b",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:39.462Z",
+      "lastUpdated": "2026-08-01T21:46:39.462Z",
+      "createdOn": "2026-07-28T20:10:55.897Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9fad4e27dd6bfb04d83e"
+        ],
+        "audio-file": "https://media.transistor.fm/0e4370f8/124bb91c.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 28,
+        "name": "#28 Vinyasa: Hips - Quick and Complete",
+        "slug": "28-vinyasa-hips---quick-and-complete"
+      }
+    },
+    {
+      "id": "6a6376ba784e8645842a490b",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-02T12:39:03.317Z",
+      "lastUpdated": "2026-08-02T12:38:46.864Z",
+      "createdOn": "2026-07-24T14:29:13.996Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/8a179de9/a4c0ba33.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 27,
+        "name": "#27 Vinyasa: Look Within",
+        "slug": "27-vinyasa-look-within"
+      }
+    },
+    {
+      "id": "6a5f99dd60b9ba5e165c8d47",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:28.773Z",
+      "lastUpdated": "2026-08-01T21:46:28.773Z",
+      "createdOn": "2026-07-21T16:10:05.152Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/b40c79ed/0467afad.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 26,
+        "name": "#26 Nidra: Morning Wakeup",
+        "slug": "26-nidra-wakeup"
+      }
+    },
+    {
+      "id": "6a5a17059ac2ae7700f8eb41",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:22.203Z",
+      "lastUpdated": "2026-08-01T21:46:22.203Z",
+      "createdOn": "2026-07-17T11:50:29.501Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/8b9bfa9d/dfe62772.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 25,
+        "name": "#25 Vinyasa: Core and Balance",
+        "slug": "25-vinyasa-core-and-balance"
+      }
+    },
+    {
+      "id": "6a562e33b0100696b1c79070",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:15.264Z",
+      "lastUpdated": "2026-08-01T21:46:15.264Z",
+      "createdOn": "2026-07-14T12:40:19.416Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a43e8248f5bae754aa7d3f6",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/f43e3f11/957643d2.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 24,
+        "name": "#24 Vinyasa: Rooted and Radiant",
+        "slug": "24-vinyasa-rooted-and-radiant"
+      }
+    },
+    {
+      "id": "6a50567bf627cd8be4169750",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:11.146Z",
+      "lastUpdated": "2026-08-01T21:46:11.146Z",
+      "createdOn": "2026-07-10T02:18:35.974Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a50568af627cd8be4169970",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/426fa806/0d59b181.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-07-09T00:00:00.000Z",
+        "class": 23,
+        "name": "#23 Yoga Nidra: Anxiety Relief",
+        "slug": "23-nidra-anxiety-relief"
+      }
+    },
+    {
+      "id": "6a4d269ea1594d3215f4a049",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:06.650Z",
+      "lastUpdated": "2026-08-01T21:46:06.650Z",
+      "createdOn": "2026-07-07T16:17:34.466Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/b688cf7c/cd0c8a23.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 22,
+        "name": "#22 Vinyasa: Build & Open (Half Mandala)",
+        "slug": "22-vinyasa-half-mandala"
+      }
+    },
+    {
+      "id": "6a47b3e2ec28dc222622e4d4",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:46:03.297Z",
+      "lastUpdated": "2026-08-01T21:46:03.297Z",
+      "createdOn": "2026-07-03T13:06:42.464Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da61bb02402c70a6b79ee",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/be46a492/dfe2d6e2.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 21,
+        "name": "#21 Vinyasa: Twisty Vinyasa",
+        "slug": "21-vinyasa-twisty-vinyasa"
+      }
+    },
+    {
+      "id": "6a43e7ecc15a215f778c339f",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:58.950Z",
+      "lastUpdated": "2026-08-01T21:45:58.950Z",
+      "createdOn": "2026-06-30T15:59:40.218Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a43e83b0b7f40f0b5fd078f",
+        "style": [
+          "69df9f599ea1afca33119640"
+        ],
+        "focus-areas": [
+          "69df9fad4e27dd6bfb04d83e"
+        ],
+        "audio-file": "https://media.transistor.fm/d0975481/f858335c.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 20,
+        "name": "#20 Yin: Hips",
+        "slug": "20-yin-hips"
+      }
+    },
+    {
+      "id": "6a3ed293cc3de60647431b1e",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:55.490Z",
+      "lastUpdated": "2026-08-01T21:45:55.490Z",
+      "createdOn": "2026-06-26T19:27:15.013Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b14819407ae87ddf0cac"
+        ],
+        "audio-file": "https://media.transistor.fm/88e6ff88/cd54b1a6.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 19,
+        "name": "#19 Vinyasa: Quick Core",
+        "slug": "19-vinyasa-quick-core"
+      }
+    },
+    {
+      "id": "6a33d91fba542d45d16c3ac5",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:49.912Z",
+      "lastUpdated": "2026-08-01T21:45:49.912Z",
+      "createdOn": "2026-06-18T11:40:15.122Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/6fdf6af3/39ea8334.mp3",
+        "instructor": "Megan",
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 18,
+        "name": "#18 Yoga Nidra: Morning Forest Walk",
+        "slug": "18-nidra-morning-forest-walk"
+      }
+    },
+    {
+      "id": "6a240d712c253b9e5ef249da",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:46.874Z",
+      "lastUpdated": "2026-08-01T21:45:46.874Z",
+      "createdOn": "2026-06-06T12:07:13.425Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b1e8d8d6218ac4390116"
+        ],
+        "audio-file": "https://media.transistor.fm/eabb5c8e/5c832b21.mp3",
+        "instructor": "Megan",
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 17,
+        "name": "#17 Vinyasa: Hamstrings",
+        "slug": "17-vinyasa-hamstrings"
+      }
+    },
+    {
+      "id": "6a240d3407863619629ba7a9",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:43.455Z",
+      "lastUpdated": "2026-08-01T21:45:43.455Z",
+      "createdOn": "2026-06-06T12:06:12.909Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/a4850a15/10924e85.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 16,
+        "name": "#16 Yoga Nidra: Beach Stroll",
+        "slug": "16-nidra-beach-stroll"
+      }
+    },
+    {
+      "id": "6a240c06d4c8e03752bb431d",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:17.375Z",
+      "lastUpdated": "2026-08-01T21:45:17.375Z",
+      "createdOn": "2026-06-06T12:01:10.825Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/318c7b1d/34d63aac.mp3",
+        "instructor": "Megan",
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 13,
+        "name": "#13 Vinyasa: Well Rounded",
+        "slug": "13-vinyasa-well-rounded"
+      }
+    },
+    {
+      "id": "6a24070b5fb5517249cdb0e8",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:14.022Z",
+      "lastUpdated": "2026-08-01T21:45:14.022Z",
+      "createdOn": "2026-06-06T11:39:55.034Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b1e8d8d6218ac4390116"
+        ],
+        "audio-file": "https://media.transistor.fm/78a9cfc3/0ddafd2e.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": null,
+        "class": 12,
+        "name": "#12 Vinyasa: Hamstrings",
+        "slug": "12-vinyasa-hamstrings"
+      }
+    },
+    {
+      "id": "6a15b4b60a4dad07af63eebe",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-04T12:49:08.902Z",
+      "lastUpdated": "2026-08-04T12:12:51.906Z",
+      "createdOn": "2026-05-26T14:56:54.784Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a241057f67452b10ceb86d2",
+        "style": [
+          "69df9f83206b42d96bca10da"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/5d782081/10de972f.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-05-03T00:00:00.000Z",
+        "class": 11,
+        "name": "#11 Yoga Nidra: Rotation of Conciousness",
+        "slug": "yoga-nidra-rot-of-con"
+      }
+    },
+    {
+      "id": "6a15b465fd3322aec8df6f4d",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:06.388Z",
+      "lastUpdated": "2026-08-01T21:45:06.388Z",
+      "createdOn": "2026-05-26T14:55:33.165Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/80fc32fc/fa3863e3.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-05-02T00:00:00.000Z",
+        "class": 10,
+        "name": "#10 Vinyasa: Spinal Breath Visualization",
+        "slug": "spinal-breath-visualization-vinyasa"
+      }
+    },
+    {
+      "id": "6a15b42a39e7394b694361c1",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:02.742Z",
+      "lastUpdated": "2026-08-01T21:45:02.742Z",
+      "createdOn": "2026-05-26T14:54:34.597Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da61bb02402c70a6b79ee",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/ef79c0d0/ee11c00a.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-03-29T00:00:00.000Z",
+        "class": 9,
+        "name": "#9 Vinyasa: Balance",
+        "slug": "balance-vinyasa-1"
+      }
+    },
+    {
+      "id": "6a15b3d16d082fd47db1682d",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:46.949Z",
+      "lastUpdated": "2026-08-01T21:44:46.949Z",
+      "createdOn": "2026-05-26T14:53:05.830Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/85f8b0da/6f5ac6a1.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-03-25T00:00:00.000Z",
+        "class": 8,
+        "name": "#8 Vinyasa: Sun Salutations",
+        "slug": "sun-salutations-1"
+      }
+    },
+    {
+      "id": "6a15b23a87e8f51fcb67a4c8",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:43.345Z",
+      "lastUpdated": "2026-08-01T21:44:43.345Z",
+      "createdOn": "2026-05-26T14:46:18.745Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a240a57f67452b10cea7efa",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/d43e1876/2f05a7d3.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-03-20T00:00:00.000Z",
+        "class": 7,
+        "name": "#7 Vinyasa: Grounded",
+        "slug": "grounded-1"
+      }
+    },
+    {
+      "id": "6a15b1b35597f6c270f0d760",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:29.340Z",
+      "lastUpdated": "2026-08-01T21:44:29.340Z",
+      "createdOn": "2026-05-26T14:44:03.894Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/4ba6b701/6d4b664f.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-04-10T00:00:00.000Z",
+        "class": 5,
+        "name": "#5 Vinyasa: Grounded",
+        "slug": "grounded-2"
+      }
+    },
+    {
+      "id": "6a15b174af41b9d5b4dd4dca",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:25.037Z",
+      "lastUpdated": "2026-08-01T21:44:25.037Z",
+      "createdOn": "2026-05-26T14:43:00.886Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b14819407ae87ddf0cac"
+        ],
+        "audio-file": "https://media.transistor.fm/07ad788e/f25dd8f3.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-04-09T00:00:00.000Z",
+        "class": 4,
+        "name": "#4 Vinyasa: Core",
+        "slug": "core-1"
+      }
+    },
+    {
+      "id": "6a14979ba6534a77cad1c3ce",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:38.988Z",
+      "lastUpdated": "2026-08-01T21:45:38.988Z",
+      "createdOn": "2026-05-25T18:40:27.482Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/c58cb3c1/b2b4aedd.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-05-23T00:00:00.000Z",
+        "class": 15,
+        "name": "#15 Vinyasa: Simple Flow",
+        "slug": "simple-basic-flow-vinyasa"
+      }
+    },
+    {
+      "id": "6a14976e338e007af71d2068",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:45:33.400Z",
+      "lastUpdated": "2026-08-01T21:45:33.400Z",
+      "createdOn": "2026-05-25T18:39:42.172Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5d99b85709a2f7159d8",
+        "style": [
+          "69df9f3bd1ba1c756df7f4f8"
+        ],
+        "focus-areas": [
+          "69df9fad4e27dd6bfb04d83e"
+        ],
+        "audio-file": "https://media.transistor.fm/07a5773d/b6cf109c.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-05-23T00:00:00.000Z",
+        "class": 14,
+        "name": "#14 Vinyasa: Short Flow Hips",
+        "slug": "short-flow-hips"
+      }
+    },
+    {
+      "id": "6a1497279d25099af8f0141d",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:20.707Z",
+      "lastUpdated": "2026-08-01T21:44:20.707Z",
+      "createdOn": "2026-05-25T18:38:31.444Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5fb817aca17982bd83c",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9fad4e27dd6bfb04d83e"
+        ],
+        "audio-file": "https://media.transistor.fm/88fbe9de/4a596e44.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-04-08T00:00:00.000Z",
+        "class": 3,
+        "name": "#3 Vinyasa: Hips",
+        "slug": "hips-1"
+      }
+    },
+    {
+      "id": "6a1496fc4923b9100674f250",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:44:38.873Z",
+      "lastUpdated": "2026-08-01T21:44:38.873Z",
+      "createdOn": "2026-05-25T18:37:48.059Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b1e8d8d6218ac4390116"
+        ],
+        "audio-file": "https://media.transistor.fm/2e18bf80/c945b46c.mp3",
+        "instructor": null,
+        "description": null,
+        "featured": false,
+        "published-date": "2026-03-20T00:00:00.000Z",
+        "class": 6,
+        "name": "#6 Vinyasa: Side Body",
+        "slug": "side-body-1"
+      }
+    },
+    {
+      "id": "69dfa13b388b131e66e6cc6a",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:43:46.904Z",
+      "lastUpdated": "2026-08-01T21:43:46.904Z",
+      "createdOn": "2026-04-15T14:31:23.724Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da61bb02402c70a6b79ee",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "69df9f9d0d7088308a122d72"
+        ],
+        "audio-file": "https://media.transistor.fm/634fe239/f671759d.mp3",
+        "instructor": "Megan Rader",
+        "description": null,
+        "featured": false,
+        "published-date": "2026-04-06T00:00:00.000Z",
+        "class": 1,
+        "name": "#1 Vinyasa: Well Rounded",
+        "slug": "well-rounded-1"
+      }
+    },
+    {
+      "id": "69dfa0ee4009ec7deac1dd0b",
+      "cmsLocaleId": "68da5ad000ddc4bb75805b27",
+      "lastPublished": "2026-08-01T21:43:53.514Z",
+      "lastUpdated": "2026-08-01T21:43:53.514Z",
+      "createdOn": "2026-04-15T14:30:06.858Z",
+      "isArchived": false,
+      "isDraft": false,
+      "fieldData": {
+        "durations": "6a1da5ecbd9196bce6570b8d",
+        "style": [
+          "69df9f4e9677f67205c7b770"
+        ],
+        "focus-areas": [
+          "6a15b08c39e7394b69405fc1"
+        ],
+        "audio-file": "https://media.transistor.fm/b368ec3e/61c3df1b.mp3",
+        "instructor": "Megan Rader",
+        "description": null,
+        "featured": false,
+        "published-date": "2026-04-07T00:00:00.000Z",
+        "class": 2,
+        "name": "#2 Vinyasa: Spinal Rotation",
+        "slug": "spinal-rotation-1"
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 100,
+    "offset": 0,
+    "total": 52
+  }
+}
