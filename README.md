@@ -51,7 +51,7 @@ Steps:
    `./node_modules/.bin/wrangler d1 create yogaudio-api` and `./node_modules/.bin/wrangler kv namespace create CACHE`.
 2. Apply the schema remotely: `./node_modules/.bin/wrangler d1 migrations apply DB --remote --env production`.
 3. Secrets, each with `wrangler secret put <NAME> --env production`: `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TRANSISTOR_API_KEY`, `STRIPE_RESTRICTED_KEY` (restricted key: Customers read, Subscriptions write), and `TOKEN_SIGNING_KEY` generated fresh with `openssl rand -base64 48` (never reuse the local one; changing it later signs everyone out).
-4. Membership rules: `ACTIVE_PLAN_STATUSES` (Q3, default `ACTIVE,TRIALING,PAST_DUE`) and `ALLOWED_PLAN_IDS` (Q4, default empty = any plan). Confirm both against the real plans before deploy.
+4. Membership rules: `ACTIVE_PLAN_STATUSES` (Q3, default `ACTIVE,TRIALING`) and `ALLOWED_PLAN_IDS` (Q4, default empty = any plan). Confirm both against the real plans before deploy.
 5. Sign in with Apple (Q9): if the site offers Google or another third-party login, App Review rule 4.8 needs Sign in with Apple too. Recheck the live login form.
 6. Deploy (`wrangler deploy --env production`), then set `YOGAUDIO_CODE_URL` in the Webflow embed.
 7. Warm the catalog before members use the app. The first `/catalog` build looks up every class's episode on Transistor (4 at a time, then cached 24 h in `ep:` keys), and Transistor's rate limit can fail a cold build. Sign in once with a test member (or `GET /catalog` with its access token) and confirm classes come back. Putting direct `media.transistor.fm` URLs in the CMS audio field skips the lookups entirely.

@@ -35,17 +35,18 @@ export async function verifyMemberToken(env: Env, token: string): Promise<string
 }
 
 // Admin API: GET /members/:id -> { data: { auth: { email }, planConnections: [{ planId, status }] } }.
-// verify in Task 10: the planConnections / status / auth.email paths, no real member seen yet.
+// verified 2026-10-21 against real data
 async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
   if (res.status === 404) return { active: false, email: "", at: Date.now() }; // member deleted
   if (!res.ok) throw new ApiError(502, "upstream_unavailable");
   const m = ((await res.json().catch(() => null)) as { data?: any } | null)?.data;
   if (!m) throw new ApiError(502, "upstream_unavailable");
-  const statuses = list(env.ACTIVE_PLAN_STATUSES);
+  // Status compare is case-insensitive; ACTIVE_PLAN_STATUSES is the allow-list (ACTIVE,TRIALING), so PAST_DUE does not unlock.
+  const statuses = list(env.ACTIVE_PLAN_STATUSES).map((s) => s.toLowerCase());
   const plans = list(env.ALLOWED_PLAN_IDS);
   const active = ((m.planConnections ?? []) as { planId?: string; status?: string }[]).some(
-    (c) => statuses.includes(String(c.status)) && (plans.length === 0 || plans.includes(String(c.planId))),
+    (c) => statuses.includes(String(c.status).toLowerCase()) && (plans.length === 0 || plans.includes(String(c.planId))),
   );
   return { active, email: String(m.auth?.email ?? ""), at: Date.now() };
 }

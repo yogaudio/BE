@@ -6,7 +6,7 @@ compatibility_date = "2026-08-01"
 # Production values live in [env.production] below.
 [vars]
 LOGIN_PAGE_ORIGIN = "http://localhost:8788"
-ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING,PAST_DUE"
+ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING"
 ALLOWED_PLAN_IDS = ""
 MEMBERSTACK_API_BASE = "http://localhost:8788/memberstack"
 WEBFLOW_API_BASE = "http://localhost:8788/webflow"
@@ -41,7 +41,7 @@ name = "yogaudio-api"
 
 [env.production.vars]
 LOGIN_PAGE_ORIGIN = "https://www.yogaudio.com"
-ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING,PAST_DUE"
+ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING"
 ALLOWED_PLAN_IDS = ""
 MEMBERSTACK_API_BASE = "https://admin.memberstack.com"
 WEBFLOW_API_BASE = "https://api.webflow.com"

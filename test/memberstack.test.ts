@@ -1,6 +1,7 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteMember, getMembership, getStripeCustomerId, verifyMemberToken } from "../src/memberstack";
+import shapes from "../dev/fixtures/memberstack-member-shapes.json";
 import { IDS, mockAccountUpstreams, mockMemberstack } from "./helpers";
 
 const ctx = () => createExecutionContext();
@@ -14,7 +15,7 @@ describe("getMembership", () => {
     mockMemberstack();
     expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "active@example.test" });
     expect(await getMembership(env, ctx(), IDS.inactive)).toMatchObject({ active: false, stale: false });
-    expect(await getMembership(env, ctx(), IDS.pastDue)).toMatchObject({ active: true, stale: false });
+    expect(await getMembership(env, ctx(), IDS.pastDue)).toMatchObject({ active: false, stale: false });
   });
 
   it("ALLOWED_PLAN_IDS restricts the plan", async () => {
@@ -81,6 +82,54 @@ describe("getMembership", () => {
       expect((await getMembership(env, ctx(), IDS.active)).stale).toBe(false);
       expect(calls).toHaveLength(1);
     });
+  });
+});
+
+// Membership rule v2 against the real-shape member fixtures. Each shape gets a fresh cache key.
+describe("membership rule v2 (member shapes)", () => {
+  type Shape = (typeof shapes)[keyof typeof shapes];
+  const withShape = async (shape: Shape, envOverrides: Record<string, string> = {}) => {
+    await env.CACHE.delete(`ms:${shape.id}`);
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ data: shape }));
+    return getMembership({ ...env, ...envOverrides }, ctx(), shape.id);
+  };
+  const withStatus = (status: string): Shape => {
+    const s = structuredClone(shapes.freeActive);
+    s.planConnections[0].status = status;
+    return s;
+  };
+
+  it("free ACTIVE plan is active", async () => {
+    expect(await withShape(shapes.freeActive)).toEqual({ active: true, stale: false, email: "user-1@example.com" });
+  });
+
+  it("TRIALING is active", async () => {
+    expect(await withShape(withStatus("TRIALING"))).toMatchObject({ active: true, stale: false });
+  });
+
+  it("no plan connections is inactive", async () => {
+    expect(await withShape(shapes.noPlan)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("CANCELED is inactive", async () => {
+    expect(await withShape(shapes.canceled)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("REQUIRES_PAYMENT is inactive", async () => {
+    expect(await withShape(shapes.requiresPayment)).toMatchObject({ active: false, stale: false });
+  });
+
+  it("PAST_DUE is inactive", async () => {
+    expect(await withShape(withStatus("PAST_DUE"))).toMatchObject({ active: false, stale: false });
+  });
+
+  it("mixed connections (ACTIVE free plus CANCELED) is active", async () => {
+    expect(await withShape(shapes.multipleConnections)).toMatchObject({ active: true, stale: false });
+  });
+
+  it("status compare is case-insensitive: 'active' matches the var ACTIVE", async () => {
+    expect(await withShape(withStatus("active"), { ACTIVE_PLAN_STATUSES: "ACTIVE" })).toMatchObject({ active: true });
   });
 });
 

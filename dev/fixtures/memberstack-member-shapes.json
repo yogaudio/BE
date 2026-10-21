@@ -131,7 +131,7 @@
     "stripeCustomerId": "cus_fake_5",
     "planConnections": [
       {
-        "id": "con_fake_5_null",
+        "id": "con_fake_5_a",
         "active": false,
         "status": "CANCELED",
         "planId": "pln_monthly-3rc0sgh",
@@ -151,7 +151,7 @@
         }
       },
       {
-        "id": "con_fake_5_null",
+        "id": "con_fake_5_b",
         "active": true,
         "status": "ACTIVE",
         "planId": "pln_free-plan-6aap0jr6",

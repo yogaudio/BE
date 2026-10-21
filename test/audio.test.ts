@@ -52,9 +52,11 @@ describe("GET /play/:classId", () => {
     expect(await res.json()).toEqual({ error: "membership_inactive" });
   });
 
-  it("a past-due member (default statuses) gets the url", async () => {
+  it("a past-due member (default statuses) is 403 membership_inactive", async () => {
     mockAll();
-    expect((await play("wf_good_1", IDS.pastDue)).status).toBe(200);
+    const res = await play("wf_good_1", IDS.pastDue);
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "membership_inactive" });
   });
 
   it("401 without a token or with a bad one; checked before anything else", async () => {
