@@ -1,18 +1,19 @@
-// Task 4 rewrites this file for the v2 /play. Kept: the /play paths that still hold and the legacy buildAudioIndex unit test.
 import { createExecutionContext, env, waitOnExecutionContext } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildAudioIndex } from "../src/audio";
 import { route } from "../src/index";
 import { signAccessToken } from "../src/tokens";
-import type { WebflowItem } from "../src/webflow";
+import wfClasses from "../dev/fixtures/webflow-classes.json";
+import wfDurations from "../dev/fixtures/webflow-durations.json";
+import wfFocus from "../dev/fixtures/webflow-focus-areas.json";
+import wfStyles from "../dev/fixtures/webflow-styles.json";
 import { IDS, mockMemberstack, mockWebflow } from "./helpers";
 
-// One fetch mock for Memberstack + Webflow + Transistor, dispatched by path.
-function mockAll(opts: { transistorStatus?: number; calls?: string[]; collections?: Record<string, unknown[]> } = {}) {
+// One fetch mock for Memberstack + Webflow, dispatched by path.
+function mockAll(opts: { calls?: string[]; collections?: Record<string, unknown[]> } = {}) {
   const calls = opts.calls ?? [];
   // both helpers spy on the same fetch, so grab each implementation before the next one replaces it
   const ms_impl = mockMemberstack({ calls }).getMockImplementation()!;
-  const wf_impl = mockWebflow({ calls, transistorStatus: opts.transistorStatus, collections: opts.collections }).getMockImplementation()!;
+  const wf_impl = mockWebflow({ calls, collections: opts.collections }).getMockImplementation()!;
   return vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
     const path = new URL(input instanceof Request ? input.url : String(input)).pathname;
     return (path.startsWith("/memberstack/") || path.includes("/members/") ? ms_impl : wf_impl)(input, init);
@@ -32,7 +33,6 @@ async function play(classId: string, who: string | null = IDS.active, token?: st
 beforeEach(async () => {
   vi.restoreAllMocks();
   await env.CACHE.delete("catalog:v2");
-  await env.CACHE.delete("ep:ep_fake_1");
   for (const id of Object.values(IDS)) await env.CACHE.delete(`ms:${id}`);
 });
 
@@ -42,6 +42,13 @@ describe("GET /play/:classId", () => {
     const res = await play("6ad7b26d1bf051ee351944a3");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ url: "https://media.transistor.fm/00a90e00/36cad4bf.mp3", durationSec: 1800, expiresAt: null });
+  });
+
+  it("makes no outbound fetch to any Transistor host", async () => {
+    const calls: string[] = [];
+    mockAll({ calls });
+    expect((await play("6ad7b26d1bf051ee351944a3")).status).toBe(200);
+    expect(calls.filter((c) => /transistor/i.test(c))).toEqual([]);
   });
 
   it("an inactive member is 403 membership_inactive", async () => {
@@ -67,9 +74,13 @@ describe("GET /play/:classId", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("an unknown class is 404 not_found", async () => {
-    mockAll();
-    for (const id of ["nope", "constructor"]) {
+  it("an unknown class, or one listed in Webflow with unusable audio, is 404 not_found", async () => {
+    const base = wfClasses.items[0];
+    const bad = ["", "http://media.transistor.fm/a.mp3", "https://share.transistor.fm/s/abc"].map((audio, n) => ({
+      ...base, id: `bad${n}`, fieldData: { ...base.fieldData, name: `Bad ${n}`, slug: `bad-${n}`, "audio-file": audio },
+    }));
+    mockAll({ collections: { "fake-collection": [...wfClasses.items, ...bad], "fake-styles": wfStyles.items, "fake-focus": wfFocus.items, "fake-durations": wfDurations.items } });
+    for (const id of ["nope", "constructor", "bad0", "bad1", "bad2"]) {
       const res = await play(id);
       expect(res.status, id).toBe(404);
       expect(await res.json()).toEqual({ error: "not_found" });
@@ -87,26 +98,5 @@ describe("GET /play/:classId", () => {
     const res = await play("%E0%A4");
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "not_found" });
-  });
-});
-
-const item = (o: Partial<WebflowItem> = {}): WebflowItem => ({
-  id: "i1", audio: "https://media.transistor.fm/a.mp3", ...o,
-});
-
-describe("buildAudioIndex (legacy, Task 4 removes)", () => {
-  it("indexes direct urls and episode ids (also from a share url); skips junk", async () => {
-    mockAll();
-    const idx = await buildAudioIndex(env, [
-      item({ id: "a" }),
-      item({ id: "b", audio: "ep_fake_1" }),
-      item({ id: "c", audio: "https://share.transistor.fm/s/ep_fake_1" }),
-      item({ id: "d", audio: "" }),
-      item({ id: "e", audio: "http://media.transistor.fm/a.mp3" }),
-      item({ id: "f", audio: "https://evil.example/a.mp3" }),
-      item({ id: "g", audio: { x: 1 } }),
-    ]);
-    expect([...idx.keys()].sort()).toEqual(["a", "b", "c"]);
-    expect(idx.get("b")).toEqual({ url: "https://media.transistor.fm/54b166cd/dfa54a0f.mp3", durationSec: 1629 });
   });
 });

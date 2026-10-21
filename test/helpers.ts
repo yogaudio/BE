@@ -1,6 +1,5 @@
 import { env } from "cloudflare:test";
 import { vi } from "vitest";
-import episodes from "../dev/fixtures/transistor-episodes.json";
 import members from "../dev/fixtures/members.json";
 import wfClasses from "../dev/fixtures/webflow-classes.json";
 import wfDurations from "../dev/fixtures/webflow-durations.json";
@@ -29,8 +28,7 @@ export const IDS = { active: "mem_fake_active", inactive: "mem_fake_inactive", p
 
 // Fake Webflow Data API on top of globalThis.fetch, same shapes as dev/fake-upstreams.mjs.
 // `pageSize` caps items per page (real Webflow caps at 100) so pagination is testable with the small fixture.
-// It also fakes Transistor episode lookups (x-api-key auth); `transistorStatus` forces that service's response status.
-export function mockWebflow(opts: { pageSize?: number; status?: number; transistorStatus?: number; failCollection?: string; calls?: string[]; collections?: Record<string, unknown[]> } = {}) {
+export function mockWebflow(opts: { pageSize?: number; status?: number; failCollection?: string; calls?: string[]; collections?: Record<string, unknown[]> } = {}) {
   const calls = opts.calls ?? [];
   const collections = opts.collections ?? {
     "fake-collection": wfClasses.items,
@@ -41,12 +39,6 @@ export function mockWebflow(opts: { pageSize?: number; status?: number; transist
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     calls.push(`${url.pathname}${url.search}`);
-    if (url.pathname.startsWith("/transistor/")) {
-      if (opts.transistorStatus) return Response.json({ message: "boom" }, { status: opts.transistorStatus });
-      if ((init?.headers as Record<string, string>)?.["x-api-key"] !== env.TRANSISTOR_API_KEY) return Response.json({}, { status: 401 });
-      const ep = (episodes as Record<string, unknown>)[url.pathname.split("/").pop()!];
-      return ep ? Response.json({ data: ep }) : Response.json({ message: "not found" }, { status: 404 });
-    }
     if (opts.status || opts.failCollection === url.pathname.split("/")[4]) return Response.json({ message: "boom" }, { status: opts.status ?? 500 });
     const all = collections[url.pathname.split("/")[4]];
     if (!all) return Response.json({ message: "collection not found" }, { status: 404 });

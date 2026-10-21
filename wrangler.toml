@@ -10,13 +10,11 @@ ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING"
 ALLOWED_PLAN_IDS = ""
 MEMBERSTACK_API_BASE = "http://localhost:8788/memberstack"
 WEBFLOW_API_BASE = "http://localhost:8788/webflow"
-TRANSISTOR_API_BASE = "http://localhost:8788/transistor"
 STRIPE_API_BASE = "http://localhost:8788/stripe"
 WEBFLOW_COLLECTION_ID = "fake-collection"
 WF_STYLES_COLLECTION_ID = "fake-styles"
 WF_FOCUS_COLLECTION_ID = "fake-focus"
 WF_DURATIONS_COLLECTION_ID = "fake-durations"
-WF_FIELD_AUDIO = "audio"
 
 # Local dev only (top level). Production deploys use `wrangler deploy --env production`.
 # Local ids only; the production ones are in [env.production] below.
@@ -40,14 +38,12 @@ ACTIVE_PLAN_STATUSES = "ACTIVE,TRIALING"
 ALLOWED_PLAN_IDS = ""
 MEMBERSTACK_API_BASE = "https://admin.memberstack.com"
 WEBFLOW_API_BASE = "https://api.webflow.com"
-TRANSISTOR_API_BASE = "https://api.transistor.fm"
 STRIPE_API_BASE = "https://api.stripe.com"
 # STRIPE_RESTRICTED_KEY is a secret: wrangler secret put STRIPE_RESTRICTED_KEY --env production
 WEBFLOW_COLLECTION_ID = "69dfa08c6df4c012c08ab369"
 WF_STYLES_COLLECTION_ID = "69df9f2f93abe92e0f48c006"
 WF_FOCUS_COLLECTION_ID = "69df9f94ea2119ca1015c06f"
 WF_DURATIONS_COLLECTION_ID = "6a1da5cffb3303724f335c63"
-WF_FIELD_AUDIO = "audio"
 
 [[env.production.d1_databases]]
 binding = "DB"

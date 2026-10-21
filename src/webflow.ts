@@ -25,11 +25,6 @@ export interface WebflowCollections {
   focusAreas: WebflowRawItem[];
   durations: WebflowRawItem[];
 }
-// Legacy v1 shape, only for audio.ts (buildAudioIndex). Task 4 removes it with audio.ts's Transistor lookups.
-export interface WebflowItem {
-  id: string;
-  audio: unknown;
-}
 interface RawItem {
   id?: unknown;
   isDraft?: boolean;

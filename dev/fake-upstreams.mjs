@@ -1,7 +1,7 @@
-// Fake Memberstack, Stripe, Webflow, Transistor and the yogaudio.com login page, for local dev. Node built-ins only.
+// Fake Memberstack, Stripe, Webflow and the yogaudio.com login page, for local dev. Node built-ins only.
 // Run: node dev/fake-upstreams.mjs   (port 8788)
 // Faults: FAKE_FAULT=slow|500|drop env var, `?fault=` on any request, or at runtime
-//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow|transistor]
+//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow]
 // State (deleted members, cancelled subscriptions) lives for the process; GET /_reset restores it.
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -11,13 +11,11 @@ const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8787";
 const KEYS = {
   memberstack: process.env.MEMBERSTACK_SECRET_KEY ?? "sk_fake_memberstack",
   webflow: process.env.WEBFLOW_TOKEN ?? "fake-webflow-token",
-  transistor: process.env.TRANSISTOR_API_KEY ?? "fake-transistor-key",
   stripe: process.env.STRIPE_RESTRICTED_KEY ?? "rk_fake_stripe",
 };
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const members = fixture("members.json");
 const webflow = fixture("webflow-items.json");
-const episodes = fixture("transistor-episodes.json");
 const subsFixture = fixture("stripe-subscriptions.json");
 let subs = structuredClone(subsFixture);
 const deleted = new Set();
@@ -147,14 +145,6 @@ createServer(async (req, res) => {
       cmsLocaleId: "loc_fake", lastPublished: "2026-01-01T00:00:00.000Z", lastUpdated: "2026-01-01T00:00:00.000Z", createdOn: "2026-01-01T00:00:00.000Z", ...i,
     }));
     return send(res, 200, { items, pagination: { limit, offset, total: all.length } });
-  }
-
-  // Transistor API v1. https://developers.transistor.fm/#get-/v1/episodes/-id-
-  const tr = p.match(/^\/transistor\/v1\/episodes\/([^/]+)$/);
-  if (tr && req.method === "GET") {
-    if (await applyFault("transistor", url, req, res)) return;
-    if (!auth("transistor", req.headers["x-api-key"] === KEYS.transistor)) return;
-    return episodes[tr[1]] ? send(res, 200, { data: episodes[tr[1]] }) : send(res, 404, { message: "not found" });
   }
 
   send(res, 404, { message: "not found" });
