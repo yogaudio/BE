@@ -42,7 +42,7 @@ async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
   if (!res.ok) throw new ApiError(502, "upstream_unavailable");
   const m = ((await res.json().catch(() => null)) as { data?: any } | null)?.data;
   if (!m) throw new ApiError(502, "upstream_unavailable");
-  // Status compare is case-insensitive; ACTIVE_PLAN_STATUSES is the allow-list (ACTIVE,TRIALING), so PAST_DUE does not unlock.
+  // Status compare is case-insensitive; ACTIVE_PLAN_STATUSES is the allow-list, so any other status (PAST_DUE, CANCELED) does not unlock.
   const statuses = list(env.ACTIVE_PLAN_STATUSES).map((s) => s.toLowerCase());
   const plans = list(env.ALLOWED_PLAN_IDS);
   const active = ((m.planConnections ?? []) as { planId?: string; status?: string }[]).some(

@@ -11,11 +11,11 @@ beforeEach(async () => {
 });
 
 describe("getMembership", () => {
-  it("active, inactive and past-due fixtures", async () => {
+  it("active, no-plan and canceled fixtures", async () => {
     mockMemberstack();
     expect(await getMembership(env, ctx(), IDS.active)).toMatchObject({ active: true, stale: false, email: "user-1@example.com" });
     expect(await getMembership(env, ctx(), IDS.inactive)).toMatchObject({ active: false, stale: false });
-    expect(await getMembership(env, ctx(), IDS.pastDue)).toMatchObject({ active: false, stale: false });
+    expect(await getMembership(env, ctx(), IDS.canceled)).toMatchObject({ active: false, stale: false });
   });
 
   it("ALLOWED_PLAN_IDS restricts the plan", async () => {

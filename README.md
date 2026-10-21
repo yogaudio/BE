@@ -19,7 +19,7 @@ Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request
 
 ## Config
 
-Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production collection id and the production D1/KV ids are `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
+Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production Webflow collection ids are real; only the production D1/KV ids are still `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
 
 Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `STRIPE_RESTRICTED_KEY`, `TOKEN_SIGNING_KEY`.
 
@@ -32,15 +32,15 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 Everything that is still a placeholder or an unchecked guess before the first production deploy.
 
 Placeholders (`SET_IN_TASK_10`):
-- `wrangler.toml:65` production D1 `database_id`, `wrangler.toml:70` production KV `id` (see below).
+- `wrangler.toml:51` production D1 `database_id`, `wrangler.toml:56` production KV `id` (see below).
 - `login-page/app-login.html:8` `window.YOGAUDIO_CODE_URL`: the deployed Worker URL ending in `/auth/code`.
 
 "Verify in Task 10" markers (check against the real APIs, fix the paths if they differ):
-- `src/memberstack.ts:20` verify-token response (`data.id`); `src/memberstack.ts:38` member shape (`planConnections[].planId/status`, `auth.email`).
-- `src/memberstack.ts:54` `getStripeCustomerId` member field name `stripeCustomerId`; `src/memberstack.ts:65` `deleteMember` delete endpoint and whether it cancels Stripe itself.
-- `src/stripe.ts:23` subscription list response for a deleted customer (assumed 404; a 400 with `error.code` `resource_missing` is also treated as "customer gone"). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:49`, already `https://api.stripe.com`) are listed in the steps below.
-- `src/webflow.ts:33` Webflow v2 items response shape.
-- The four Webflow collection ids (`WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`) in `[env.production.vars]` and the field slugs in `src/catalog.ts` against the live site.
+- `src/memberstack.ts:20` verify-token response (`data.id`); the member shape (`planConnections[].planId/status`, `auth.email`) is verified (2026-10-21, `src/memberstack.ts:38`).
+- `src/memberstack.ts:55` `getStripeCustomerId` member field name `stripeCustomerId`; `src/memberstack.ts:66` `deleteMember` delete endpoint and whether it cancels Stripe itself.
+- `src/stripe.ts:24` subscription list response for a deleted customer (assumed 404; a 400 with `error.code` `resource_missing` is also treated as "customer gone"). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:41`, already `https://api.stripe.com`) are listed in the steps below.
+- `src/webflow.ts:39` Webflow v2 items response shape.
+- The field slugs in `src/webflow.ts` against the live site (the four production collection ids in `[env.production.vars]` are already real).
 - `login-page/app-login.html:13` the Memberstack DOM calls (`$memberstackDom`, `getCurrentMember`, `onAuthChange`, `getMemberCookie`); `login-page/README.md:12` whether "redirect after login" can be turned off for one page.
 
 Steps:

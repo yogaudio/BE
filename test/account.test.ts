@@ -75,13 +75,13 @@ describe("POST /account/delete", () => {
     await kept(OTHER);
   });
 
-  it("past-due member: both live subscriptions cancelled", async () => {
-    await seed(IDS.pastDue);
+  it("canceled member: both live subscriptions cancelled", async () => {
+    await seed(IDS.canceled);
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
-    expect((await del(IDS.pastDue)).status).toBe(204);
+    expect((await del(IDS.canceled)).status).toBe(204);
     expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(2);
-    await cleaned(IDS.pastDue);
+    await cleaned(IDS.canceled);
   });
 
   it("inactive member (no Stripe customer): no Stripe calls, member deleted", async () => {

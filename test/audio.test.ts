@@ -59,9 +59,9 @@ describe("GET /play/:classId", () => {
     expect(await res.json()).toEqual({ error: "membership_inactive" });
   });
 
-  it("a past-due member (default statuses) is 403 membership_inactive", async () => {
+  it("a canceled member is 403 membership_inactive", async () => {
     mockAll();
-    const res = await play("6ad7b26d1bf051ee351944a3", IDS.pastDue);
+    const res = await play("6ad7b26d1bf051ee351944a3", IDS.canceled);
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ error: "membership_inactive" });
   });
