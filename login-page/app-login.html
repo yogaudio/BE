@@ -1,6 +1,6 @@
 <!-- yogaudio app login: paste this whole block into an Embed element on the Webflow page /app-login.
      Setup steps for Elliott: login-page/README.md. Plain HTML and JS, no build step.
-     Memberstack's script must already be installed site-wide (it is on yogaudio.com). -->
+     Memberstack's script must already be installed site-wide (it is on yogaudio.com). The embed draws its own login form. -->
 <p id="app-login-msg" role="status"></p>
 
 <script>
@@ -11,32 +11,89 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
 <script id="token-source">
 // ---- 2. Token source: the only Memberstack-specific part. ----
 // verified 2026-10-22 against the Memberstack DOM docs: https://developers.memberstack.com/llms-full.txt
-//   getCurrentMember() -> Promise<{ data: Member | null }>, onAuthChange(cb(member | null)), getMemberCookie() -> string | null (sync).
-//   Webflow script-tag global is window.$memberstackDom (seen in docs.memberstack.com help-center snippets); confirm once on the live page.
+//   getCurrentMember() -> Promise<{ data: Member | null }>, getMemberCookie() -> string | null (sync),
+//   loginMemberEmailPassword({ email, password }) -> Promise<{ data: { member, tokens: { accessToken } } }> (throws on a bad login),
+//   sendMemberResetPasswordEmail({ email }).
+//   Logging in with our own form and loginMemberEmailPassword never touches the form-based login redirect,
+//   so the handoff below runs straight from the promise. Any old Memberstack form on the page is hidden for good.
 // Waits up to ~5 s (polling every 100 ms, from DOMContentLoaded) for the Memberstack global; null if absent.
-const msReady = new Promise((resolve) => {
-  const start = () => {
-    let tries = 0;
-    const t = setInterval(() => {
-      if (window.$memberstackDom || ++tries >= 50) { clearInterval(t); resolve(window.$memberstackDom || null); }
-    }, 100);
+(function () {
+  const msReady = new Promise((resolve) => {
+    const start = () => {
+      let tries = 0;
+      const t = setInterval(() => {
+        if (window.$memberstackDom || ++tries >= 50) { clearInterval(t); resolve(window.$memberstackDom || null); }
+      }, 100);
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+  });
+
+  // The client's old Memberstack form (if still on the page) never shows.
+  document.head.insertAdjacentHTML("beforeend", "<style>[data-app-login-form]{display:none!important}</style>");
+
+  // Our own plain login form, in a container the handoff shows only when nobody is logged in.
+  const box = document.createElement("div");
+  box.setAttribute("data-app-own-form", "");
+  box.style.display = "none";
+  box.style.maxWidth = "360px";
+  box.style.font = "inherit";
+  box.innerHTML = `
+  <form id="app-login-form" novalidate style="display:grid;gap:12px;font:inherit">
+    <label for="app-login-email" style="display:grid;gap:4px">Email
+      <input id="app-login-email" type="email" autocomplete="email" required style="font:inherit;padding:10px;border:1px solid #999;border-radius:4px"></label>
+    <label for="app-login-password" style="display:grid;gap:4px">Password
+      <input id="app-login-password" type="password" autocomplete="current-password" required style="font:inherit;padding:10px;border:1px solid #999;border-radius:4px"></label>
+    <p id="app-login-error" role="alert" style="margin:0;color:#b00020"></p>
+    <p id="app-login-info" role="status" style="margin:0"></p>
+    <button id="app-login-submit" type="submit" style="font:inherit;padding:12px;border:0;border-radius:4px;background:#222;color:#fff;cursor:pointer">Log in</button>
+    <a id="app-login-forgot" href="#" style="font:inherit;color:inherit">Forgot password?</a>
+  </form>`;
+  document.getElementById("app-login-msg").after(box);
+
+  window.YOGAUDIO_TOKEN_SOURCE = {
+    // Resolves to the member token if someone is already logged in on the site, else null. Rejects if Memberstack never loads.
+    async getToken() {
+      const ms = await msReady;
+      if (!ms) throw new Error("memberstack missing");
+      const { data: member } = await ms.getCurrentMember();
+      return member ? ms.getMemberCookie() : null;
+    },
+    // Wires our form; calls cb(token) as soon as the login promise resolves.
+    onLogin(cb) { // only called after getToken() resolved, so the global exists
+      const ms = window.$memberstackDom;
+      const $ = (id) => document.getElementById(id);
+      const email = $("app-login-email"), password = $("app-login-password");
+      const err = $("app-login-error"), info = $("app-login-info"), btn = $("app-login-submit");
+      $("app-login-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        err.textContent = info.textContent = "";
+        btn.disabled = true;
+        btn.textContent = "Logging in…";
+        try {
+          const res = await ms.loginMemberEmailPassword({ email: email.value.trim(), password: password.value });
+          cb(ms.getMemberCookie() || res?.data?.tokens?.accessToken);
+        } catch (ex) {
+          // Fixed copy on purpose: Memberstack's own text could mention signing up (reader-app rule).
+          err.textContent = ex instanceof TypeError ? "Something went wrong. Try again." : "Email or password is incorrect.";
+          password.value = "";
+          btn.disabled = false;
+          btn.textContent = "Log in";
+        }
+      });
+      $("app-login-forgot").addEventListener("click", async (e) => {
+        e.preventDefault();
+        err.textContent = info.textContent = "";
+        if (!email.value.trim()) { err.textContent = "Enter your email above first."; email.focus(); return; }
+        try {
+          await ms.sendMemberResetPasswordEmail({ email: email.value.trim() });
+          info.textContent = "Check your email for a reset link.";
+        } catch (ex) {
+          err.textContent = "Something went wrong. Try again.";
+        }
+      });
+    },
   };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-});
-window.YOGAUDIO_TOKEN_SOURCE = {
-  // Resolves to the member token if someone is already logged in on the site, else null. Rejects if Memberstack never loads.
-  async getToken() {
-    const ms = await msReady;
-    if (!ms) throw new Error("memberstack missing");
-    const { data: member } = await ms.getCurrentMember();
-    return member ? ms.getMemberCookie() : null;
-  },
-  // Calls cb(token) once a login succeeds on this page.
-  onLogin(cb) { // only called after getToken() resolved, so the global exists
-    const ms = window.$memberstackDom;
-    ms.onAuthChange((member) => { if (member) cb(ms.getMemberCookie()); });
-  },
-};
+})();
 </script>
 
 <script id="handoff">
@@ -47,7 +104,7 @@ window.YOGAUDIO_TOKEN_SOURCE = {
   const q = new URLSearchParams(location.search);
   const state = q.get("state") || "";
   const challenge = q.get("code_challenge") || "";
-  const formEls = () => document.querySelectorAll("[data-app-login-form]");
+  const formEls = () => document.querySelectorAll("[data-app-own-form]");
   const showForm = (on) => formEls().forEach((el) => { el.style.display = on ? "" : "none"; });
   // Some in-app browsers (Chrome Custom Tabs) block a script jump to yogaudio:// without a tap, so after 1.5 s
   // a plain link to the same URL (still built from the constant CALLBACK) lets the member tap through.
@@ -100,7 +157,7 @@ window.YOGAUDIO_TOKEN_SOURCE = {
   showForm(false);
   src.getToken().then((token) => {
     if (token) return handoff(token);
-    showForm(true); // not logged in: show the site's own Memberstack login form
+    showForm(true); // not logged in: show the login form
     try { src.onLogin(handoff); } catch (e) { done = true; showForm(false); fail("login_unavailable"); }
   }).catch(() => { done = true; showForm(false); fail("login_unavailable"); });
 })();

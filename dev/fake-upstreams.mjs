@@ -54,7 +54,7 @@ const handoffScript = () => {
 const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app login</title>
 <h1>Fake yogaudio.com /app-login</h1>
 <p id="app-login-msg"></p>
-<div data-app-login-form>
+<div data-app-own-form>
 <button data-t="fake-ms-token-active">Sign in as active member</button>
 <button data-t="fake-ms-token-noplan">Sign in as member with no plan</button>
 <button data-t="fake-ms-token-canceled">Sign in as canceled member</button>
