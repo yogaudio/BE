@@ -10,10 +10,9 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
 
 <script id="token-source">
 // ---- 2. Token source: the only Memberstack-specific part. ----
-// verify in Task 10: https://developers.memberstack.com/dom-package/get-current-member
-//   (getCurrentMember -> { data: member | null }), onAuthChange(callback(member|null)), and
-//   getMemberCookie() -> string | null (the member token). Docs: https://developers.memberstack.com/llms-full.txt
-//   On Webflow sites the DOM package is exposed as window.$memberstackDom. Confirm that name on the live site.
+// verified 2026-10-22 against the Memberstack DOM docs: https://developers.memberstack.com/llms-full.txt
+//   getCurrentMember() -> Promise<{ data: Member | null }>, onAuthChange(cb(member | null)), getMemberCookie() -> string | null (sync).
+//   Webflow script-tag global is window.$memberstackDom (seen in docs.memberstack.com help-center snippets); confirm once on the live page.
 // Waits up to ~5 s (polling every 100 ms, from DOMContentLoaded) for the Memberstack global; null if absent.
 const msReady = new Promise((resolve) => {
   const start = () => {
