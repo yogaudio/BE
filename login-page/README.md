@@ -9,9 +9,9 @@ The yogaudio app opens a page on yogaudio.com so members can log in with their n
 3. Do not put the site header and footer on this page if they contain any pricing or "join" links. Use a bare page, or a header and footer without those links. The page must show nothing about prices or joining.
 4. Add a login form from Memberstack to the page (the same login form you use elsewhere on the site). Remove every sign-up or join link from this copy of the form. A "forgot password" link may stay.
 5. Select the form's wrapper (the box that contains the form) and add a custom attribute: name `data-app-login-form`, value `true`. The page uses this to show the form only when the member is not yet logged in.
-6. In Memberstack, turn OFF "redirect after login" for this page, so members are not sent elsewhere and never get back to the app. Confirm in Task 10: Memberstack may only offer a global or per-plan redirect setting. If so, Hau will advise what to do, so do not get stuck on this step.
+6. In Memberstack, turn OFF "redirect after login" for this page, so members are not sent elsewhere and never get back to the app. Set the login form on this page to stay on the same page after login (no redirect).
 7. Add an Embed element to the page and paste in the whole contents of `app-login.html` from this folder. Keep it on the page, outside the form.
-8. Set the API address: at the top of the pasted code, change the line `window.YOGAUDIO_CODE_URL = "https://API_HOST_SET_IN_TASK_10/auth/code";` to the real address of the yogaudio API, ending in `/auth/code`. This is the only line you ever need to edit.
+8. Set the API address: the address is already filled in at the top of the pasted code: `https://yogaudio-api.shrill-cloud-cf32.workers.dev/auth/code`. Change it only if the API moves to a custom domain.
 9. Publish the site. Open `https://www.yogaudio.com/app-login?state=aaaaaaaaaaaaaaaaaaaa&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM` in a browser. A logged-in member is sent straight to `yogaudio://auth` (the browser will say it cannot open that address, which is expected on a computer). A moment later a "Return to the app" link appears under the message. A logged-out visitor sees the login form. Opening `/app-login` with nothing after it shows a plain "This sign-in link is not valid" message.
 
 ## For the developer
