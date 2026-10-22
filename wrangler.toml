@@ -32,6 +32,8 @@ id = "00000000000000000000000000000000"
 [env.production]
 name = "yogaudio-api"
 account_id = "a41e300f18db46bed221c07814d67f3d"
+workers_dev = true
+preview_urls = false
 
 [env.production.vars]
 LOGIN_PAGE_ORIGIN = "https://www.yogaudio.com"
