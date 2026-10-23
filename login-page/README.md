@@ -23,4 +23,4 @@ Google login: the embed offers email + password only. If any members sign in wit
 - After sending the member to the app, the page shows a "Return to the app" link 1.5 s later, pointing at the same `yogaudio://auth?...` address. Some phone browsers only open the app from a tap, so this link is the fallback. Leave it in place.
 - The callback `yogaudio://auth` is a constant in the script, never read from the address, so the page cannot be used as an open redirect.
 - The API's `LOGIN_PAGE_ORIGIN` must be `https://www.yogaudio.com` (the page posts to the API from there).
-- Locally, `npm run fakes` serves `/app-login` on http://localhost:8788 using the same handoff script from `app-login.html`; only the token source is replaced by two buttons.
+- Locally, `npm run fakes` serves `/app-login` on http://localhost:8788 serving the whole `app-login.html` embed after a stub `$memberstackDom`: log in as `active@fake.test`, `noplan@fake.test`, `canceled@fake.test` or `requires-payment@fake.test` with any password except `wrong`. `npm run check:login` drives it in headless Chrome.

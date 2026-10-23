@@ -43,28 +43,37 @@ async function applyFault(service, url, req, res) {
   return false;
 }
 
-// The fake page runs the real embed's handoff script (login-page/app-login.html, one source of truth);
-// only the token source is swapped: the two buttons stand in for Memberstack's login.
-const embed = () => readFileSync(new URL("../login-page/app-login.html", import.meta.url), "utf8");
-const handoffScript = () => {
-  const m = embed().match(/<script id="handoff">[\s\S]*?<\/script>/);
-  if (!m) throw new Error('login-page/app-login.html has no <script id="handoff"> block; the fake /app-login needs it');
-  return m[0];
+// The fake page serves the whole real embed (login-page/app-login.html, one source of truth) after a stub
+// window.$memberstackDom that implements only what the embed calls. The email picks the fake token.
+// Serve-time rewrite: only the YOGAUDIO_CODE_URL constant (production worker) is pointed at the local worker.
+const FAKE_LOGINS = {
+  "active@fake.test": "fake-ms-token-active",
+  "noplan@fake.test": "fake-ms-token-noplan",
+  "canceled@fake.test": "fake-ms-token-canceled",
+  "requires-payment@fake.test": "fake-ms-token-requires-payment",
 };
-const loginPage = () => `<!doctype html><meta charset="utf-8"><title>Fake app login</title>
+const loginPage = () => {
+  const html = readFileSync(new URL("../login-page/app-login.html", import.meta.url), "utf8");
+  const re = /window\.YOGAUDIO_CODE_URL = "[^"]*";/;
+  if (!re.test(html)) throw new Error("login-page/app-login.html has no window.YOGAUDIO_CODE_URL constant; the fake /app-login needs it");
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake app login</title>
 <h1>Fake yogaudio.com /app-login</h1>
-<p id="app-login-msg"></p>
-<div data-app-own-form>
-<button data-t="fake-ms-token-active">Sign in as active member</button>
-<button data-t="fake-ms-token-noplan">Sign in as member with no plan</button>
-<button data-t="fake-ms-token-canceled">Sign in as canceled member</button>
-<button data-t="fake-ms-token-requires-payment">Sign in as requires-payment member</button>
-</div>
-<script>window.YOGAUDIO_CODE_URL = ${JSON.stringify(WORKER_URL + "/auth/code")};
-let cb;
-window.YOGAUDIO_TOKEN_SOURCE = { getToken: async () => null, onLogin: (f) => { cb = f; } };
-for (const b of document.querySelectorAll("button")) b.onclick = () => cb(b.dataset.t);</script>
-${handoffScript()}`;
+<p>Fake page, local dev only. Log in with any password (<code>wrong</code> fails) and one of: ${Object.keys(FAKE_LOGINS).map((e) => `<code>${e}</code>`).join(", ")}.</p>
+<script>
+const logins = ${JSON.stringify(FAKE_LOGINS)};
+window.$memberstackDom = {
+  getCurrentMember: async () => ({ data: null }),
+  getMemberCookie: () => null,
+  sendMemberResetPasswordEmail: async () => ({}),
+  loginMemberEmailPassword: async ({ email, password }) => {
+    const t = logins[email];
+    if (!t || password === "wrong") throw Object.assign(new Error("Invalid email or password"), { code: "invalid-credentials" });
+    return { data: { member: { id: "fake-" + t }, tokens: { accessToken: t } } };
+  },
+};
+</script>
+${html.replace(re, () => `window.YOGAUDIO_CODE_URL = ${JSON.stringify(WORKER_URL + "/auth/code")};`)}`;
+};
 
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);

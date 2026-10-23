@@ -7,6 +7,7 @@
     "dev": "wrangler d1 migrations apply DB --local && wrangler dev --port 8787",
     "fakes": "node dev/fake-upstreams.mjs",
     "test": "vitest run",
+    "check:login": "node dev/check-login-page.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
