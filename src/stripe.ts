@@ -21,7 +21,7 @@ async function stripeFetch(env: Env, path: string, method: "GET" | "DELETE"): Pr
 // Cancels every subscription that is not canceled or incomplete_expired of the customer immediately: no proration or invoice params, so no refund.
 // Returns how many were cancelled.
 export async function cancelLiveSubscriptions(env: Env, customerId: string): Promise<number> {
-  // verify in Task 10: list response for a deleted customer (assumed 404, or 400 with error.code resource_missing)
+  // verify in M3: list response for a deleted customer (assumed 404, or 400 with error.code resource_missing)
   const res = await stripeFetch(env, `/v1/subscriptions?customer=${encodeURIComponent(customerId)}&limit=100`, "GET");
   if (res.status === 404) return 0;
   if (res.status === 400 && ((await res.clone().json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code === "resource_missing") return 0;

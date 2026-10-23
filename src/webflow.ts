@@ -36,7 +36,7 @@ const PAGE = 100;
 const MAX_PAGES = 50; // ponytail: 5000 items; raise if the library outgrows it
 
 // Every live item of a collection, following `offset` until `pagination.total`. Drafts and archived are skipped.
-// verify in Task 10: response shape against the real Webflow v2 API.
+// verified 2026-10-23: response shape, proven by the live catalog.
 async function fetchLive(env: Env, collectionId: string): Promise<RawItem[]> {
   const out: RawItem[] = [];
   for (let page = 0, offset = 0; page < MAX_PAGES; page++) {
