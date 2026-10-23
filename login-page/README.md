@@ -18,9 +18,9 @@ Google login: the embed offers email + password only. If any members sign in wit
 
 ## For the developer
 
-- The embed assumes Memberstack's script is already installed site-wide and uses its `$memberstackDom` object. The Memberstack calls were checked against the Memberstack DOM docs (see the "verified" comment in `app-login.html`); only the `$memberstackDom` global name still needs confirming on the live page (step 9).
+- The embed assumes Memberstack's script is already installed site-wide and uses its `$memberstackDom` object. The Memberstack calls were checked against the Memberstack DOM docs (see the "verified" comment in `app-login.html`); the `$memberstackDom` global name was confirmed by the live login (2026-10-23).
 - The embed logs in with `$memberstackDom.loginMemberEmailPassword({ email, password })` from its own form and starts the handoff from that call's promise, so Memberstack's post-login redirect is expected not to fire (confirm with the step-9 login check). "Forgot password?" uses `sendMemberResetPasswordEmail({ email })`.
 - After sending the member to the app, the page shows a "Return to the app" link 1.5 s later, pointing at the same `yogaudio://auth?...` address. Some phone browsers only open the app from a tap, so this link is the fallback. Leave it in place.
 - The callback `yogaudio://auth` is a constant in the script, never read from the address, so the page cannot be used as an open redirect.
-- The API's `LOGIN_PAGE_ORIGIN` must be `https://www.yogaudio.com` (the page posts to the API from there).
+- This is embed v3 (own form, readable colours: text #1a1a1a, error red, white inputs). The API's `LOGIN_PAGE_ORIGIN` is set to `https://www.yogaudio.com` (the page posts to the API from there).
 - Locally, `npm run fakes` serves `/app-login` on http://localhost:8788 serving the whole `app-login.html` embed after a stub `$memberstackDom`: log in as `active@fake.test`, `noplan@fake.test`, `canceled@fake.test` or `requires-payment@fake.test` with any password except `wrong`. `npm run check:login` drives it in headless Chrome.

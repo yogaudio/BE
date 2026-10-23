@@ -17,7 +17,7 @@ const headers = (env: Env) => ({ "x-api-key": env.MEMBERSTACK_SECRET_KEY, "conte
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
 // Admin API: POST /members/verify-token -> { data: { id } }. A 4xx means the token is bad.
-// verify in Task 10: response paths against a real Memberstack account.
+// verified 2026-10-23: response paths, proven by the live login.
 export async function verifyMemberToken(env: Env, token: string): Promise<string> {
   const res = await upstreamFetch(
     `${env.MEMBERSTACK_API_BASE}/members/verify-token`,
@@ -52,7 +52,7 @@ async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
 }
 
 // Admin API: GET /members/:id -> { data: { stripeCustomerId } }. "gone" = member already deleted.
-// verify in Task 10: field name stripeCustomerId
+// verify in M3: field name stripeCustomerId
 export async function getStripeCustomerId(env: Env, memberId: string): Promise<string | null | "gone"> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
   if (res.status === 404) return "gone";
@@ -63,7 +63,7 @@ export async function getStripeCustomerId(env: Env, memberId: string): Promise<s
 }
 
 // Admin API: DELETE /members/:id. 2xx or 404 (already gone) is success.
-// verify in Task 10: delete endpoint and whether it cancels Stripe itself
+// verify in M3: delete endpoint and whether it cancels Stripe itself
 export async function deleteMember(env: Env, memberId: string): Promise<void> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { method: "DELETE", headers: headers(env) }, TIMEOUT_MS);
   if (!res.ok) console.warn("memberstack delete: status", res.status);

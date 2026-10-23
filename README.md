@@ -1,6 +1,6 @@
 # yogaudio-api
 
-Cloudflare Worker behind the yogaudio reader app. It checks Memberstack membership, issues short-lived access tokens and rotating refresh tokens (D1), serves the Webflow class catalog (KV cache), resolves audio URLs only for active members, and deletes an account on request (`POST /account/delete`: cancels Stripe subscriptions, deletes the Memberstack member, then clears our tokens and cache; retry-safe). No framework; a plain router in `src/index.ts`.
+Cloudflare Worker behind the yogaudio reader app. It checks Memberstack membership, issues short-lived access tokens and rotating refresh tokens (D1), serves the Webflow class catalog (KV cache), resolves audio URLs only for active members, and deletes an account on request (`POST /account/delete`, M3: returns 404 until `STRIPE_RESTRICTED_KEY` is set; it cancels Stripe subscriptions, deletes the Memberstack member, then clears our tokens and cache; retry-safe). No framework; a plain router in `src/index.ts`.
 
 ## Local dev (with fakes)
 
@@ -19,45 +19,28 @@ Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request
 
 ## Config
 
-Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production Webflow collection ids are real; only the production D1/KV ids are still `SET_IN_TASK_10` placeholders; bindings and vars are not inherited between environments.
+Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production Webflow collection ids are real; the production D1/KV ids are real too (Cloudflare account `a41e300f…`); bindings and vars are not inherited between environments.
 
-Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `STRIPE_RESTRICTED_KEY`, `TOKEN_SIGNING_KEY`.
+Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TOKEN_SIGNING_KEY` (all three set in production), and `STRIPE_RESTRICTED_KEY` (not set yet: `/account/delete` returns 404 until M3).
 
 ## Login page
 
-`login-page/app-login.html` is the embed for yogaudio.com `/app-login`; steps for Elliott are in `login-page/README.md`. The Worker URL it posts to is the single `window.YOGAUDIO_CODE_URL` line at the top of the embed (placeholder `https://API_HOST_SET_IN_TASK_10/auth/code`, set it in Task 10).
+`login-page/app-login.html` is the embed for yogaudio.com `/app-login`; steps for Elliott are in `login-page/README.md`. It is embed v3: it draws its own form and sets its own readable colours. The Worker URL it posts to is the single `window.YOGAUDIO_CODE_URL` line at the top of the embed, now `https://yogaudio-api.shrill-cloud-cf32.workers.dev/auth/code`. `LOGIN_PAGE_ORIGIN` in production is `https://www.yogaudio.com`. `npm run check:login` drives the local fake `/app-login` in headless Chrome.
 
-## Task 10 switch-over
+## Production (done 2026-10-22)
 
-Everything that is still a placeholder or an unchecked guess before the first production deploy.
+Deployed to the client's Cloudflare account (`a41e300f…`) as worker `yogaudio-api`: D1 and KV created, migration applied remotely, secrets MEMBERSTACK_SECRET_KEY, WEBFLOW_TOKEN and TOKEN_SIGNING_KEY set. `ACTIVE_PLAN_STATUSES` is `ACTIVE,TRIALING` (`REQUIRES_PAYMENT` members get no access). The Memberstack verify-token and Webflow calls were proven by the live login and catalog (2026-10-23).
 
-Placeholders (`SET_IN_TASK_10`):
-- `wrangler.toml:51` production D1 `database_id`, `wrangler.toml:56` production KV `id` (see below).
-- `login-page/app-login.html:8` `window.YOGAUDIO_CODE_URL`: the deployed Worker URL ending in `/auth/code`.
+Still open for M3: `wrangler secret put STRIPE_RESTRICTED_KEY --env production` (restricted key: Customers read, Subscriptions write), then verify the Stripe and Memberstack delete paths marked "verify in M3" in `src/`. Sign in with Apple (App Review rule 4.8) is needed only if Google or another third-party login is ever added.
 
-"Verify in Task 10" markers (check against the real APIs, fix the paths if they differ):
-- `src/memberstack.ts:20` verify-token response (`data.id`); the member shape (`planConnections[].planId/status`, `auth.email`) is verified (2026-10-21, `src/memberstack.ts:38`).
-- `src/memberstack.ts:55` `getStripeCustomerId` member field name `stripeCustomerId`; `src/memberstack.ts:66` `deleteMember` delete endpoint and whether it cancels Stripe itself.
-- `src/stripe.ts:24` subscription list response for a deleted customer (assumed 404; a 400 with `error.code` `resource_missing` is also treated as "customer gone"). `STRIPE_RESTRICTED_KEY` (Customers read, Subscriptions write) and `STRIPE_API_BASE` (`wrangler.toml:41`, already `https://api.stripe.com`) are listed in the steps below.
-- `src/webflow.ts:39` Webflow v2 items response shape.
-- The field slugs in `src/webflow.ts` against the live site (the four production collection ids in `[env.production.vars]` are already real).
-- `login-page/app-login.html:13` the Memberstack DOM calls (`$memberstackDom`, `getCurrentMember`, `onAuthChange`, `getMemberCookie`); `login-page/README.md:12` whether "redirect after login" can be turned off for one page.
-
-Steps:
-1. Create the stores and paste their ids into `[env.production]`:
-   `./node_modules/.bin/wrangler d1 create yogaudio-api` and `./node_modules/.bin/wrangler kv namespace create CACHE`.
-2. Apply the schema remotely: `./node_modules/.bin/wrangler d1 migrations apply DB --remote --env production`.
-3. Secrets, each with `wrangler secret put <NAME> --env production`: `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `STRIPE_RESTRICTED_KEY` (restricted key: Customers read, Subscriptions write), and `TOKEN_SIGNING_KEY` generated fresh with `openssl rand -base64 48` (never reuse the local one; changing it later signs everyone out).
-4. Membership rules: `ACTIVE_PLAN_STATUSES` (Q3, default `ACTIVE,TRIALING`) and `ALLOWED_PLAN_IDS` (Q4, default empty = any plan). Confirm both against the real plans before deploy.
-5. Sign in with Apple (Q9): if the site offers Google or another third-party login, App Review rule 4.8 needs Sign in with Apple too. Recheck the live login form.
-6. Deploy (`wrangler deploy --env production`), then set `YOGAUDIO_CODE_URL` in the Webflow embed.
-7. Watch `wrangler tail --env production` during the first sign-in: a run of `memberstack verify-token: status 401/403` means `MEMBERSTACK_SECRET_KEY` is wrong, not the member's token.
+Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangler tail --env production`; a run of `memberstack verify-token: status 401/403` means `MEMBERSTACK_SECRET_KEY` is wrong, not the member's token.
 
 ## Tests
 
 ```
 npm test            # vitest in the Workers pool
 npm run typecheck   # tsc --noEmit, strict
+npm run check:login # headless Chrome drives the fake /app-login
 ```
 
 ## Deploy
@@ -67,6 +50,6 @@ wrangler d1 migrations apply DB --remote --env production
 wrangler deploy --env production
 ```
 
-Set the five secrets first with `wrangler secret put <NAME> --env production`. A plain `wrangler deploy` would ship the local-dev (localhost) config, so always pass `--env production`. The top-level worker is named `yogaudio-api-dev`, so a plain deploy can never overwrite the production worker `yogaudio-api`. Every upstream call goes through `upstreamFetch` (`src/upstream.ts`), which turns timeouts, network errors and upstream 5xx into 502 `upstream_unavailable`.
+The secrets are set (three of the four; see Config) with `wrangler secret put <NAME> --env production`. A plain `wrangler deploy` would ship the local-dev (localhost) config, so always pass `--env production`. The top-level worker is named `yogaudio-api-dev`, so a plain deploy can never overwrite the production worker `yogaudio-api`. Every upstream call goes through `upstreamFetch` (`src/upstream.ts`), which turns timeouts, network errors and upstream 5xx into 502 `upstream_unavailable`.
 
 `npm test` needs no `.dev.vars`: fake secrets and D1 migrations are set up in `vitest.config.ts`.
