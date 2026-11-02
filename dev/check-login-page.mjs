@@ -1,4 +1,4 @@
-// Drives the fake /app-login (real v2 embed + stub Memberstack) in headless Chrome over CDP.
+// Drives the fake /app-login (real v4 embed + stub Memberstack) in headless Chrome over CDP.
 // Needs `npm run dev` (:8787) and `npm run fakes` (:8788) running. Node built-ins only.
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
@@ -79,6 +79,29 @@ try {
   await open(PAGE);
   const cOk = await waitFor("document.getElementById('app-login-msg').textContent.includes('not valid')");
   check("C not-valid message, no form", cOk && !(await ev(formVisible)), await ev("document.getElementById('app-login-msg').textContent"));
+  // Case D: existing session asks Continue as {email}; no code until the tap.
+  const codePosts = () => ev("performance.getEntriesByType('resource').filter((e) => e.name.endsWith('/auth/code')).length");
+  const tapCode = async () => { for (let t = 0; t < 8000; t += 100) { if (navs.some((u) => u.startsWith("yogaudio://auth?code="))) return true; await sleep(100); } return false; };
+  await open(PAGE + query(challenge) + "&session=active@fake.test");
+  check("D shows Continue as email", await waitFor("document.getElementById('app-login-continue-btn')?.textContent === 'Continue as active@fake.test'"));
+  await sleep(2000);
+  check("D no code before tap", (await codePosts()) === 0 && !navs.some((u) => u.startsWith("yogaudio://")) && !(await ev(formVisible)));
+  await ev("document.getElementById('app-login-continue-btn').click()");
+  check("D tap Continue redirects with code", await tapCode());
+
+  // Case E: Use another account logs out, shows the form, login hands off.
+  await open(PAGE + query(challenge) + "&session=active@fake.test");
+  await waitFor("!!document.getElementById('app-login-other-btn')");
+  await ev("document.getElementById('app-login-other-btn').click()");
+  check("E form shows after Use another account", await waitFor(formVisible) && (await codePosts()) === 0);
+  await fill("noplan@fake.test", "anything");
+  check("E login then hands off", await tapCode());
+
+  // Case F: logout failure fails closed.
+  await open(PAGE + query(challenge) + "&session=active@fake.test&logout_fails=1");
+  await waitFor("!!document.getElementById('app-login-other-btn')");
+  await ev("document.getElementById('app-login-other-btn').click()");
+  check("F logout failure -> error=login_unavailable, no code", await (async () => { for (let t = 0; t < 5000; t += 100) { if (navs.some((u) => u.includes("error=login_unavailable"))) return true; await sleep(100); } return false; })() && !navs.some((u) => u.includes("code=")));
   ws.close();
 } catch (e) {
   console.log("FAIL " + e.message);

@@ -1,4 +1,4 @@
-<!-- yogaudio app login: paste this whole block into an Embed element on the Webflow page /app-login.
+<!-- yogaudio app login (embed v4): paste this whole block into an Embed element on the Webflow page /app-login.
      Setup steps for Elliott: login-page/README.md. Plain HTML and JS, no build step.
      Memberstack's script must already be installed site-wide (it is on yogaudio.com). The embed draws its own login form. -->
 <p id="app-login-msg" role="status"></p>
@@ -13,7 +13,9 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
 // verified 2026-10-22 against the Memberstack DOM docs: https://developers.memberstack.com/llms-full.txt
 //   getCurrentMember() -> Promise<{ data: Member | null }>, getMemberCookie() -> string | null (sync),
 //   loginMemberEmailPassword({ email, password }) -> Promise<{ data: { member, tokens: { accessToken } } }> (throws on a bad login),
-//   sendMemberResetPasswordEmail({ email }).
+//   sendMemberResetPasswordEmail({ email }), logout() -> Promise (ends the current session), member.auth.email.
+//   Token source contract used by the handoff: getToken() -> token | null, email() -> string ("" if unknown),
+//   logout() -> Promise (rejects on failure), onLogin(cb).
 //   Logging in with our own form and loginMemberEmailPassword never touches the form-based login redirect,
 //   so the handoff below runs straight from the promise. Any old Memberstack form on the page is hidden for good.
 // Waits up to ~5 s (polling every 100 ms, from DOMContentLoaded) for the Memberstack global; null if absent.
@@ -57,6 +59,17 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
       if (!ms) throw new Error("memberstack missing");
       const { data: member } = await ms.getCurrentMember();
       return member ? ms.getMemberCookie() : null;
+    },
+    // Email of the member with a session, "" if unknown.
+    async email() {
+      const ms = await msReady;
+      const { data: member } = await ms.getCurrentMember();
+      return member?.auth?.email || "";
+    },
+    // Ends the existing session ("Use another account").
+    async logout() {
+      const ms = await msReady;
+      await ms.logout();
     },
     // Wires our form; calls cb(token) as soon as the login promise resolves.
     onLogin(cb) { // only called after getToken() resolved, so the global exists
@@ -136,6 +149,7 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
     if (done) return;
     done = true;
     showForm(false);
+    document.getElementById("app-login-continue")?.remove();
     msg.textContent = "Signing you in…";
     if (!token) return fail("no_token");
     try {
@@ -154,11 +168,40 @@ window.YOGAUDIO_CODE_URL = "https://yogaudio-api.shrill-cloud-cf32.workers.dev/a
   }
 
   const src = window.YOGAUDIO_TOKEN_SOURCE;
-  showForm(false);
-  src.getToken().then((token) => {
-    if (token) return handoff(token);
-    showForm(true); // not logged in: show the login form
-    try { src.onLogin(handoff); } catch (e) { done = true; showForm(false); fail("login_unavailable"); }
-  }).catch(() => { done = true; showForm(false); fail("login_unavailable"); });
+  const unavailable = () => { done = true; showForm(false); fail("login_unavailable"); };
+  const toLogin = () => {
+    showForm(true);
+    try { src.onLogin(handoff); } catch (e) { unavailable(); }
+  };
+  // Existing session: the member must tap Continue before a code is issued.
+  const btnStyle = "font:inherit;padding:12px;border-radius:4px;cursor:pointer;";
+  async function askContinue(token) {
+    let who = "";
+    try { who = await src.email(); } catch (e) {}
+    const box = document.createElement("div");
+    box.id = "app-login-continue";
+    box.style.cssText = "display:grid;gap:12px;max-width:360px;font:inherit";
+    const go1 = document.createElement("button");
+    go1.id = "app-login-continue-btn";
+    go1.type = "button";
+    go1.style.cssText = btnStyle + "border:0;background:#222;color:#fff";
+    go1.textContent = who ? "Continue as " + who : "Continue"; // textContent only: the email is not trusted HTML
+    go1.style.overflowWrap = "anywhere";
+    const other = document.createElement("button");
+    other.id = "app-login-other-btn";
+    other.type = "button";
+    other.style.cssText = btnStyle + "border:1px solid #222;background:#fff;color:#1a1a1a";
+    other.textContent = "Use another account";
+    go1.addEventListener("click", () => handoff(token));
+    other.addEventListener("click", async () => {
+      go1.disabled = other.disabled = true;
+      try { await src.logout(); } catch (e) { box.remove(); return unavailable(); } // fail closed: never fall through to the old session
+      box.remove();
+      toLogin();
+    });
+    box.append(go1, other);
+    msg.after(box);
+  }
+  src.getToken().then((token) => (token ? askContinue(token) : toLogin())).catch(unavailable);
 })();
 </script>

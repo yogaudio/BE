@@ -25,7 +25,7 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 
 ## Login page
 
-`login-page/app-login.html` is the embed for yogaudio.com `/app-login`; steps for Elliott are in `login-page/README.md`. It is embed v3: it draws its own form and sets its own readable colours. The Worker URL it posts to is the single `window.YOGAUDIO_CODE_URL` line at the top of the embed, now `https://yogaudio-api.shrill-cloud-cf32.workers.dev/auth/code`. `LOGIN_PAGE_ORIGIN` in production is `https://www.yogaudio.com`. `npm run check:login` drives the local fake `/app-login` in headless Chrome.
+`login-page/app-login.html` is the embed for yogaudio.com `/app-login`; steps for Elliott are in `login-page/README.md`. It is embed v4: it draws its own form and sets its own readable colours. The Worker URL it posts to is the single `window.YOGAUDIO_CODE_URL` line at the top of the embed, now `https://yogaudio-api.shrill-cloud-cf32.workers.dev/auth/code`. `LOGIN_PAGE_ORIGIN` in production is `https://www.yogaudio.com`. `npm run check:login` drives the local fake `/app-login` in headless Chrome.
 
 ## Production (done 2026-10-22)
 
