@@ -6,8 +6,9 @@ import { IDS, mockMemberstack } from "./helpers";
 const verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 const challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 
+// The local limiter is live in miniflare and shared across tests; these tests are about auth logic, so it is off here.
 const post = (path: string, body: unknown) =>
-  route(new Request(`http://api.test${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) }), env, createExecutionContext());
+  route(new Request(`http://api.test${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) }), { ...env, AUTH_CODE_LIMITER: undefined }, createExecutionContext());
 
 async function login(token = "fake-ms-token-active", extra: Record<string, unknown> = {}) {
   const r = await post("/auth/code", { memberstackToken: token, codeChallenge: challenge, state: "st", ...extra });
@@ -218,5 +219,36 @@ describe("POST /auth/logout", () => {
 
   it("400 on a missing token", async () => {
     expect((await post("/auth/logout", {})).status).toBe(400);
+  });
+});
+
+describe("POST /auth/code rate limit", () => {
+  const send = (e: object, ip = "203.0.113.7") =>
+    route(
+      new Request("http://api.test/auth/code", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: env.LOGIN_PAGE_ORIGIN, "CF-Connecting-IP": ip },
+        body: JSON.stringify({ memberstackToken: "fake-ms-token-active", codeChallenge: challenge, state: "st" }),
+      }),
+      { ...env, ...e } as typeof env,
+      createExecutionContext(),
+    );
+
+  it("429 rate_limited with CORS when the limiter says no; key is the client IP", async () => {
+    const limit = vi.fn(async (_o: { key: string }) => ({ success: false }));
+    const r = await send({ AUTH_CODE_LIMITER: { limit } });
+    expect([r.status, await err(r)]).toEqual([429, "rate_limited"]);
+    expect(r.headers.get("Access-Control-Allow-Origin")).toBe(env.LOGIN_PAGE_ORIGIN);
+    expect(limit).toHaveBeenCalledWith({ key: "203.0.113.7" });
+    expect((await env.DB.prepare("SELECT * FROM auth_codes").all()).results).toHaveLength(0);
+  });
+
+  it("no binding: normal flow", async () => {
+    expect((await send({ AUTH_CODE_LIMITER: undefined })).status).toBe(200);
+  });
+
+  it("limiter throws: request allowed", async () => {
+    const r = await send({ AUTH_CODE_LIMITER: { limit: async () => { throw new Error("down"); } } });
+    expect(r.status).toBe(200);
   });
 });

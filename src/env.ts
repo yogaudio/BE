@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
   CACHE: KVNamespace;
+  // Optional: absent binding means no rate limit.
+  AUTH_CODE_LIMITER?: RateLimit;
 
   // vars (wrangler.toml)
   LOGIN_PAGE_ORIGIN: string;

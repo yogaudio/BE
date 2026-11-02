@@ -28,6 +28,12 @@ migrations_dir = "migrations"
 binding = "CACHE"
 id = "00000000000000000000000000000000"
 
+# Rate limit for POST /auth/code (10 per 60s per IP). Not inherited by environments; repeated below.
+[[ratelimits]]
+name = "AUTH_CODE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
 # Production. Bindings and vars are NOT inherited from the top level, so everything is repeated here.
 [env.production]
 name = "yogaudio-api"
@@ -57,3 +63,8 @@ migrations_dir = "migrations"
 [[env.production.kv_namespaces]]
 binding = "CACHE"
 id = "8744f2d9203343b49a7049a32d9b0960"
+
+[[env.production.ratelimits]]
+name = "AUTH_CODE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }

@@ -16,6 +16,16 @@ async function body(request: Request, ...fields: string[]): Promise<Record<strin
 const grantError = () => new ApiError(401, "invalid_grant");
 
 export async function authCode(request: Request, env: Env): Promise<Response> {
+  if (env.AUTH_CODE_LIMITER) {
+    let ok = true;
+    try {
+      ok = (await env.AUTH_CODE_LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
+    } catch (e) {
+      // Fail open: a limiter outage must not block sign-in.
+      console.warn("rate limiter unavailable", e instanceof Error ? e.message : "unknown");
+    }
+    if (!ok) throw new ApiError(429, "rate_limited");
+  }
   const b = await body(request, "memberstackToken", "codeChallenge", "state");
   if (!/^[A-Za-z0-9_-]{43}$/.test(b.codeChallenge)) throw new ApiError(400, "invalid_request");
   const memberId = await verifyMemberToken(env, b.memberstackToken);
