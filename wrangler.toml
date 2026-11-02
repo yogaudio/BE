@@ -16,6 +16,10 @@ WF_STYLES_COLLECTION_ID = "fake-styles"
 WF_FOCUS_COLLECTION_ID = "fake-focus"
 WF_DURATIONS_COLLECTION_ID = "fake-durations"
 
+# Daily cleanup of expired auth rows (scheduled handler in src/index.ts).
+[triggers]
+crons = ["17 3 * * *"]
+
 # Local dev only (top level). Production deploys use `wrangler deploy --env production`.
 # Local ids only; the production ones are in [env.production] below.
 [[d1_databases]]
@@ -40,6 +44,12 @@ name = "yogaudio-api"
 account_id = "a41e300f18db46bed221c07814d67f3d"
 workers_dev = true
 preview_urls = false
+
+[env.production.triggers]
+crons = ["17 3 * * *"]
+
+[env.production.observability]
+enabled = true
 
 [env.production.vars]
 LOGIN_PAGE_ORIGIN = "https://www.yogaudio.com"

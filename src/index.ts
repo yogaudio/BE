@@ -1,6 +1,6 @@
 import type { Env } from "./env";
 import { ApiError, jsonError } from "./errors";
-import { authCode, authExchange, authLogout, authRefresh } from "./auth";
+import { authCode, cleanupExpired, authExchange, authLogout, authRefresh } from "./auth";
 import { getPlay } from "./audio";
 import { getCatalog } from "./catalog";
 import { deleteAccount } from "./account";
@@ -59,4 +59,7 @@ export async function route(request: Request, env: Env, ctx: ExecutionContext): 
 
 export default {
   fetch: route,
+  scheduled: (_controller, env, ctx) => {
+    ctx.waitUntil(cleanupExpired(env));
+  },
 } satisfies ExportedHandler<Env>;

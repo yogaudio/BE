@@ -92,3 +92,13 @@ export async function authLogout(request: Request, env: Env): Promise<Response> 
     .bind(Date.now(), await sha256(b.refreshToken)).run();
   return new Response(null, { status: 204 });
 }
+
+// Revoked rows are kept until they expire (not earlier): authRefresh's reuse detection needs them,
+// and after expiry the token is dead anyway. So expires_at alone decides.
+export async function cleanupExpired(env: Env, now = Date.now()): Promise<void> {
+  const [codes, tokens] = await env.DB.batch([
+    env.DB.prepare("DELETE FROM auth_codes WHERE expires_at <= ?").bind(now),
+    env.DB.prepare("DELETE FROM refresh_tokens WHERE expires_at <= ?").bind(now),
+  ]);
+  console.log("cleanup: codes", codes.meta.changes, "refresh", tokens.meta.changes);
+}

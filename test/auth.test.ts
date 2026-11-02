@@ -1,6 +1,6 @@
-import { createExecutionContext, env } from "cloudflare:test";
+import { createExecutionContext, createScheduledController, env, waitOnExecutionContext } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { route } from "../src/index";
+import worker, { route } from "../src/index";
 import { IDS, mockMemberstack } from "./helpers";
 
 const verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
@@ -250,5 +250,26 @@ describe("POST /auth/code rate limit", () => {
   it("limiter throws: request allowed", async () => {
     const r = await send({ AUTH_CODE_LIMITER: { limit: async () => { throw new Error("down"); } } });
     expect(r.status).toBe(200);
+  });
+});
+
+describe("scheduled cleanup", () => {
+  const DAY = 86400_000;
+  const code = (h: string, exp: number) => env.DB.prepare("INSERT INTO auth_codes (hash, member_id, challenge, state, expires_at) VALUES (?, 'm', 'c', 's', ?)").bind(h, exp);
+  const tok = (h: string, exp: number, rev: number | null) => env.DB.prepare("INSERT INTO refresh_tokens (hash, member_id, expires_at, revoked_at) VALUES (?, 'm', ?, ?)").bind(h, exp, rev);
+
+  it("deletes only expired rows; revoked-but-unexpired tokens stay for reuse detection", async () => {
+    const now = Date.now();
+    await env.DB.batch([
+      code("code-old", now - 1000), code("code-live", now + 60_000),
+      tok("tok-old", now - 1000, null), tok("tok-live", now + DAY, null),
+      tok("tok-revoked-recent", now + 50 * DAY, now - 1000), tok("tok-revoked-expired", now - 1000, now - 5 * DAY),
+    ]);
+    const ctx = createExecutionContext();
+    await worker.scheduled!(createScheduledController(), env, ctx);
+    await waitOnExecutionContext(ctx);
+    const left = async (t: string) => (await env.DB.prepare(`SELECT hash FROM ${t} ORDER BY hash`).all<{ hash: string }>()).results.map((r) => r.hash);
+    expect(await left("auth_codes")).toEqual(["code-live"]);
+    expect(await left("refresh_tokens")).toEqual(["tok-live", "tok-revoked-recent"]);
   });
 });

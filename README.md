@@ -35,6 +35,17 @@ Still open for M3: `wrangler secret put STRIPE_RESTRICTED_KEY --env production` 
 
 Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangler tail --env production`; a run of `memberstack verify-token: status 401/403` means `MEMBERSTACK_SECRET_KEY` is wrong, not the member's token.
 
+## Rate limit, cleanup, observability
+
+- `POST /auth/code` is limited to 10 requests per 60 s per client IP (`CF-Connecting-IP`) by the Workers Rate Limiting binding `AUTH_CODE_LIMITER` (namespace 1001). Over the limit: 429 `{"error":"rate_limited"}` (with CORS). If the binding is absent, or the limiter errors, there is no limit (fails open).
+- A daily cron (`17 3 * * *`, UTC) deletes expired `auth_codes` and `refresh_tokens` rows (`cleanupExpired` in `src/auth.ts`). Revoked refresh tokens are kept until they expire, because reuse detection needs them. Migration `0002_expires_index.sql` indexes both `expires_at` columns.
+- Production has Workers observability (logs) enabled; the cron logs `cleanup: codes N refresh M`.
+
+### Deploy checklist (next deploy)
+
+1. `wrangler d1 migrations apply DB --remote --env production` (run by the owner; adds the 0002 indexes).
+2. `wrangler deploy --env production` (ships the rate limit binding, the cron trigger and observability).
+
 ## Tests
 
 ```
