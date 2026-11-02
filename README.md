@@ -37,7 +37,7 @@ Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangle
 
 ## Rate limit, cleanup, observability
 
-- `POST /auth/code` is limited to 10 requests per 60 s per client IP (`CF-Connecting-IP`) by the Workers Rate Limiting binding `AUTH_CODE_LIMITER` (namespace 1001). Over the limit: 429 `{"error":"rate_limited"}` (with CORS). If the binding is absent, or the limiter errors, there is no limit (fails open).
+- `POST /auth/code` is limited to about 10 requests per 60 s per client IP (`CF-Connecting-IP`) by the Workers Rate Limiting binding `AUTH_CODE_LIMITER` (namespace 1001). The limit is approximate and counted per Cloudflare location, per the Workers Rate Limiting docs. Over the limit: 429 `{"error":"rate_limited"}` (with CORS). If the binding is absent, or the limiter errors, there is no limit (fails open).
 - A daily cron (`17 3 * * *`, UTC) deletes expired `auth_codes` and `refresh_tokens` rows (`cleanupExpired` in `src/auth.ts`). Revoked refresh tokens are kept until they expire, because reuse detection needs them. Migration `0002_expires_index.sql` indexes both `expires_at` columns.
 - Production has Workers observability (logs) enabled; the cron logs `cleanup: codes N refresh M`.
 
@@ -45,6 +45,10 @@ Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangle
 
 1. `wrangler d1 migrations apply DB --remote --env production` (run by the owner; adds the 0002 indexes).
 2. `wrangler deploy --env production` (ships the rate limit binding, the cron trigger and observability).
+
+## Known limitations
+
+`/play` returns the public Transistor URL from Webflow with `expiresAt: null`. Anyone holding the URL can play the file, and it does not expire. Transistor's private podcasts work through per-subscriber private RSS feeds, not signed per-file URLs that could be stored in a Webflow field, so the Worker can't issue expiring links today. The membership check runs before a URL is handed out; the URL itself is not secret. Revisit if Transistor adds signed media URLs or the audio moves to storage we control (e.g. R2 with signed URLs).
 
 ## Tests
 
