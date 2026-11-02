@@ -4,6 +4,7 @@ export type ErrorCode =
   | "invalid_grant"
   | "membership_inactive"
   | "not_found"
+  | "rate_limited"
   | "upstream_unavailable"
   | "stripe_unavailable"
   | "internal";

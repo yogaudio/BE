@@ -16,6 +16,10 @@ WF_STYLES_COLLECTION_ID = "fake-styles"
 WF_FOCUS_COLLECTION_ID = "fake-focus"
 WF_DURATIONS_COLLECTION_ID = "fake-durations"
 
+# Daily cleanup of expired auth rows (scheduled handler in src/index.ts).
+[triggers]
+crons = ["17 3 * * *"]
+
 # Local dev only (top level). Production deploys use `wrangler deploy --env production`.
 # Local ids only; the production ones are in [env.production] below.
 [[d1_databases]]
@@ -28,12 +32,24 @@ migrations_dir = "migrations"
 binding = "CACHE"
 id = "00000000000000000000000000000000"
 
+# Rate limit for POST /auth/code (10 per 60s per IP). Not inherited by environments; repeated below.
+[[ratelimits]]
+name = "AUTH_CODE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
 # Production. Bindings and vars are NOT inherited from the top level, so everything is repeated here.
 [env.production]
 name = "yogaudio-api"
 account_id = "a41e300f18db46bed221c07814d67f3d"
 workers_dev = true
 preview_urls = false
+
+[env.production.triggers]
+crons = ["17 3 * * *"]
+
+[env.production.observability]
+enabled = true
 
 [env.production.vars]
 LOGIN_PAGE_ORIGIN = "https://www.yogaudio.com"
@@ -57,3 +73,8 @@ migrations_dir = "migrations"
 [[env.production.kv_namespaces]]
 binding = "CACHE"
 id = "8744f2d9203343b49a7049a32d9b0960"
+
+[[env.production.ratelimits]]
+name = "AUTH_CODE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }

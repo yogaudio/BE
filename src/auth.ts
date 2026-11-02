@@ -16,6 +16,16 @@ async function body(request: Request, ...fields: string[]): Promise<Record<strin
 const grantError = () => new ApiError(401, "invalid_grant");
 
 export async function authCode(request: Request, env: Env): Promise<Response> {
+  if (env.AUTH_CODE_LIMITER) {
+    let ok = true;
+    try {
+      ok = (await env.AUTH_CODE_LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") ?? "unknown" })).success;
+    } catch (e) {
+      // Fail open: a limiter outage must not block sign-in.
+      console.warn("rate limiter unavailable", e instanceof Error ? e.message : "unknown");
+    }
+    if (!ok) throw new ApiError(429, "rate_limited");
+  }
   const b = await body(request, "memberstackToken", "codeChallenge", "state");
   if (!/^[A-Za-z0-9_-]{43}$/.test(b.codeChallenge)) throw new ApiError(400, "invalid_request");
   const memberId = await verifyMemberToken(env, b.memberstackToken);
@@ -81,4 +91,14 @@ export async function authLogout(request: Request, env: Env): Promise<Response> 
   await env.DB.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE hash = ? AND revoked_at IS NULL")
     .bind(Date.now(), await sha256(b.refreshToken)).run();
   return new Response(null, { status: 204 });
+}
+
+// Revoked rows are kept until they expire (not earlier): authRefresh's reuse detection needs them,
+// and after expiry the token is dead anyway. So expires_at alone decides.
+export async function cleanupExpired(env: Env, now = Date.now()): Promise<void> {
+  const [codes, tokens] = await env.DB.batch([
+    env.DB.prepare("DELETE FROM auth_codes WHERE expires_at <= ?").bind(now),
+    env.DB.prepare("DELETE FROM refresh_tokens WHERE expires_at <= ?").bind(now),
+  ]);
+  console.log("cleanup: codes", codes.meta.changes, "refresh", tokens.meta.changes);
 }
