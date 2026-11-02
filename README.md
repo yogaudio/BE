@@ -31,7 +31,7 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 
 Deployed to the client's Cloudflare account (`a41e300f…`) as worker `yogaudio-api`: D1 and KV created, migration applied remotely, secrets MEMBERSTACK_SECRET_KEY, WEBFLOW_TOKEN and TOKEN_SIGNING_KEY set. `ACTIVE_PLAN_STATUSES` is `ACTIVE,TRIALING` (`REQUIRES_PAYMENT` members get no access). The Memberstack verify-token and Webflow calls were proven by the live login and catalog (2026-10-23).
 
-Still open for M3: `wrangler secret put STRIPE_RESTRICTED_KEY --env production` (restricted key: Customers read, Subscriptions write), then verify the Stripe and Memberstack delete paths marked "verify in M3" in `src/`. Sign in with Apple (App Review rule 4.8) is needed only if Google or another third-party login is ever added.
+Still open for M3: `wrangler secret put STRIPE_RESTRICTED_KEY --env production` (restricted key: Customers read, Subscriptions write), then verify the Stripe and Memberstack delete paths marked "verify in M3" in `src/` (the Stripe customer field `stripeCustomerId` is already verified; a member with an unCANCELED paid plan and no customer id gets 502 and is not deleted). Sign in with Apple (App Review rule 4.8) is needed only if Google or another third-party login is ever added.
 
 Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangler tail --env production`; a run of `memberstack verify-token: status 401/403` means `MEMBERSTACK_SECRET_KEY` is wrong, not the member's token.
 

@@ -58,6 +58,13 @@ describe("POST /auth/code", () => {
     expect([r.status, await err(r)]).toEqual([401, "invalid_token"]);
   });
 
+  it.each([401, 403, 429])("502 upstream_unavailable when Memberstack answers %i", async (status) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({}, { status }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { r } = await login();
+    expect([r.status, await err(r)]).toEqual([502, "upstream_unavailable"]);
+  });
+
   it("502 when Memberstack is down", async () => {
     mockMemberstack({ down: true });
     const { r } = await login();
@@ -178,9 +185,9 @@ describe("POST /auth/refresh", () => {
     expect(b.active).toBe(false);
   });
 
-  it("stale membership fallback: Memberstack down, cache under 24h, member keeps the session", async () => {
+  it("stale membership fallback: Memberstack down, cache under 1h, member keeps the session", async () => {
     const first = await signedIn();
-    await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - 3 * 3600_000 }));
+    await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - 30 * 60_000 }));
     mockMemberstack({ down: true });
     const r = await post("/auth/refresh", { refreshToken: first.refreshToken });
     expect(r.status).toBe(200);
