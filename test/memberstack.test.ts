@@ -47,15 +47,27 @@ describe("getMembership", () => {
     const seed = (ageMs: number) =>
       env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: true, email: "user-1@example.com", at: Date.now() - ageMs }));
 
-    it("uses a cached entry under 24h old when Memberstack is down, marked stale", async () => {
-      await seed(2 * 3600_000);
+    it("uses a cached active entry under 1h old when Memberstack is down, marked stale", async () => {
+      await seed(30 * 60_000);
       mockMemberstack({ down: true });
       expect(await getMembership(env, ctx(), IDS.active)).toEqual({ active: true, stale: true, email: "user-1@example.com" });
     });
 
-    it("throws upstream_unavailable over 24h old or with no cache", async () => {
+    it("does not serve a cached active entry over 1h old", async () => {
+      await seed(2 * 3600_000);
       mockMemberstack({ down: true });
-      await seed(25 * 3600_000);
+      await expect(getMembership(env, ctx(), IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+    });
+
+    it("serves a cached inactive entry 2h old (24h window)", async () => {
+      await env.CACHE.put(`ms:${IDS.inactive}`, JSON.stringify({ active: false, email: "x@example.test", at: Date.now() - 2 * 3600_000 }));
+      mockMemberstack({ down: true });
+      expect(await getMembership(env, ctx(), IDS.inactive)).toEqual({ active: false, stale: true, email: "x@example.test" });
+    });
+
+    it("throws upstream_unavailable for an inactive entry over 24h old or with no cache", async () => {
+      mockMemberstack({ down: true });
+      await env.CACHE.put(`ms:${IDS.active}`, JSON.stringify({ active: false, email: "x", at: Date.now() - 25 * 3600_000 }));
       await expect(getMembership(env, ctx(), IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
       await env.CACHE.delete(`ms:${IDS.active}`);
       await expect(getMembership(env, ctx(), IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
@@ -134,16 +146,23 @@ describe("membership rule v2 (member shapes)", () => {
 });
 
 describe("verifyMemberToken", () => {
-  it("logs the Memberstack status (never the token) on 401/403/429 and still answers invalid_token", async () => {
+  it("logs the Memberstack status (never the token) on 401/403/429 and answers 502 upstream_unavailable", async () => {
     for (const status of [401, 403, 429]) {
       vi.restoreAllMocks();
       vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({}, { status }));
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      await expect(verifyMemberToken(env, "secret-member-token")).rejects.toMatchObject({ status: 401, code: "invalid_token" });
+      await expect(verifyMemberToken(env, "secret-member-token")).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
       expect(warn).toHaveBeenCalledTimes(1);
       expect(String(warn.mock.calls[0])).toContain(String(status));
       expect(String(warn.mock.calls[0])).not.toContain("secret-member-token");
     }
+  });
+});
+
+describe("verifyMemberToken other 4xx", () => {
+  it("400 stays 401 invalid_token", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({}, { status: 400 }));
+    await expect(verifyMemberToken(env, "t")).rejects.toMatchObject({ status: 401, code: "invalid_token" });
   });
 });
 

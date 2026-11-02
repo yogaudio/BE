@@ -4,6 +4,7 @@ import { upstreamFetch } from "./upstream";
 
 const FRESH_MS = 10 * 60_000;
 export const STALE_MS = 24 * 3600_000;
+const STALE_ACTIVE_MS = 3600_000; // a cached ACTIVE entry may unlock /play during an outage for 1h only; inactive keeps STALE_MS
 const TIMEOUT_MS = 5000;
 
 export interface Membership {
@@ -16,7 +17,8 @@ type Cached = { active: boolean; email: string; at: number };
 const headers = (env: Env) => ({ "x-api-key": env.MEMBERSTACK_SECRET_KEY, "content-type": "application/json" });
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
-// Admin API: POST /members/verify-token -> { data: { id } }. A 4xx means the token is bad.
+// Admin API: POST /members/verify-token -> { data: { id } }. A 4xx means the token is bad, except 401/403 (our secret key is wrong)
+// and 429 (Memberstack throttling us): neither is the member's fault, so those are 502.
 // verified 2026-10-23: response paths, proven by the live login.
 export async function verifyMemberToken(env: Env, token: string): Promise<string> {
   const res = await upstreamFetch(
@@ -26,7 +28,10 @@ export async function verifyMemberToken(env: Env, token: string): Promise<string
   );
   if (res.status >= 400) {
     // Status only, never the token: a wrong MEMBERSTACK_SECRET_KEY shows up here as a run of 401/403s.
-    if ([401, 403, 429].includes(res.status)) console.warn("memberstack verify-token: status", res.status);
+    if ([401, 403, 429].includes(res.status)) {
+      console.warn("memberstack verify-token: status", res.status);
+      throw new ApiError(502, "upstream_unavailable");
+    }
     throw new ApiError(401, "invalid_token");
   }
   const id = ((await res.json().catch(() => null)) as { data?: { id?: unknown } } | null)?.data?.id;
@@ -52,14 +57,20 @@ async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
 }
 
 // Admin API: GET /members/:id -> { data: { stripeCustomerId } }. "gone" = member already deleted.
-// verify in M3: field name stripeCustomerId
+// verified 2026-11-02: data.stripeCustomerId (docs + live read)
 export async function getStripeCustomerId(env: Env, memberId: string): Promise<string | null | "gone"> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
   if (res.status === 404) return "gone";
   if (!res.ok) throw new ApiError(502, "upstream_unavailable");
-  const m = ((await res.json().catch(() => null)) as { data?: { stripeCustomerId?: unknown } } | null)?.data;
+  const m = ((await res.json().catch(() => null)) as { data?: { stripeCustomerId?: unknown; planConnections?: { type?: string; status?: string; payment?: unknown }[] } } | null)?.data;
   if (!m) throw new ApiError(502, "upstream_unavailable");
-  return typeof m.stripeCustomerId === "string" && m.stripeCustomerId ? m.stripeCustomerId : null;
+  if (typeof m.stripeCustomerId === "string" && m.stripeCustomerId) return m.stripeCustomerId;
+  // Fail closed: a paid plan that is not CANCELED may still bill, and without a customer id we cannot cancel it.
+  if ((m.planConnections ?? []).some((c) => (c.type !== "FREE" || c.payment != null) && String(c.status).toUpperCase() !== "CANCELED")) {
+    console.warn("account delete: paid plan without stripe customer id", memberId);
+    throw new ApiError(502, "upstream_unavailable");
+  }
+  return null;
 }
 
 // Admin API: DELETE /members/:id. 2xx or 404 (already gone) is success.
@@ -81,7 +92,7 @@ export async function getMembership(env: Env, _ctx: ExecutionContext, memberId: 
     await env.CACHE.put(k, JSON.stringify(fresh), { expirationTtl: STALE_MS / 1000 }).catch(() => {});
     return { active: fresh.active, stale: false, email: fresh.email };
   } catch (e) {
-    if (cached && age < STALE_MS) {
+    if (cached && age < (cached.active ? STALE_ACTIVE_MS : STALE_MS)) {
       console.warn("membership: using stale cache for", memberId);
       return { active: cached.active, stale: true, email: cached.email };
     }

@@ -94,6 +94,25 @@ describe("POST /account/delete", () => {
     await cleaned(IDS.inactive);
   });
 
+  it("paid plan but no Stripe customer id: 502 upstream_unavailable, nothing deleted anywhere", async () => {
+    const calls: string[] = [];
+    const paid = { type: "SUBSCRIPTION", status: "ACTIVE", payment: { amount: 500 } };
+    mockAccountUpstreams({ calls, memberOverrides: { stripeCustomerId: null, planConnections: [paid] } });
+    const res = await del();
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "upstream_unavailable" });
+    expect(calls).toEqual([`GET /memberstack/members/${IDS.active}`]);
+    await kept(IDS.active);
+  });
+
+  it("free plan and no Stripe customer id still deletes", async () => {
+    const calls: string[] = [];
+    mockAccountUpstreams({ calls, memberOverrides: { stripeCustomerId: null } }); // fixture plan is FREE
+    expect((await del()).status).toBe(204);
+    expect(deletes(calls)).toEqual([`DELETE /memberstack/members/${IDS.active}`]);
+    await cleaned(IDS.active);
+  });
+
   it("member already gone: no Stripe or DELETE calls, local cleanup still runs", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls, memberGetStatus: 404 });

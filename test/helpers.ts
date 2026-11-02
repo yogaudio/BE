@@ -16,7 +16,7 @@ export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overri
     if (opts.down) throw new TypeError("fetch failed");
     if (url.pathname.endsWith("/members/verify-token")) {
       const m = (members as Record<string, { id: string }>)[JSON.parse(String(init?.body)).token];
-      return m ? Response.json({ data: { id: m.id } }) : Response.json({ message: "invalid" }, { status: 401 });
+      return m ? Response.json({ data: { id: m.id } }) : Response.json({ message: "invalid" }, { status: 400 });
     }
     const id = url.pathname.split("/").pop();
     const m = Object.values(members).find((x) => x.id === id);
@@ -58,6 +58,7 @@ export interface AccountUpstreamOpts {
   stripeResourceMissing?: boolean; // list answers 400 with error.code resource_missing
   memberDeleteStatus?: number;
   memberGetStatus?: number;
+  memberOverrides?: Record<string, unknown>; // merged into every member GET
 }
 export function mockAccountUpstreams(opts: AccountUpstreamOpts = {}) {
   const calls = opts.calls ?? [];
@@ -90,6 +91,6 @@ export function mockAccountUpstreams(opts: AccountUpstreamOpts = {}) {
       return new Response(null, { status: 204 });
     }
     if (opts.memberGetStatus) return Response.json({}, { status: opts.memberGetStatus });
-    return key ? Response.json({ data: live[key] }) : Response.json({}, { status: 404 });
+    return key ? Response.json({ data: { ...live[key], ...opts.memberOverrides } }) : Response.json({}, { status: 404 });
   });
 }
