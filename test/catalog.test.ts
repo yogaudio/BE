@@ -127,6 +127,7 @@ const seed = (ageMs: number, version = "seeded") =>
 beforeEach(async () => {
   vi.restoreAllMocks();
   await env.CACHE.delete("catalog:v2");
+  await env.CACHE.delete("catalog:rebuilding");
 });
 
 describe("GET /catalog", () => {
@@ -211,6 +212,40 @@ describe("GET /catalog", () => {
     const cached = (await env.CACHE.get("catalog:v2", "json")) as any;
     expect(cached.version).not.toBe("seeded");
     expect(Date.now() - cached.builtAt).toBeLessThan(60_000);
+  });
+
+  it("an empty Webflow catalog never replaces the cached entry: stale is kept and served", async () => {
+    await seed(11 * 60_000);
+    const calls: string[] = [];
+    mockWebflow({ calls, collections: { "fake-collection": [], "fake-styles": wfStyles.items, "fake-focus": wfFocus.items, "fake-durations": wfDurations.items } });
+    const res = await get(await authed());
+    expect(((await res.json()) as any).version).toBe("seeded");
+    expect(calls.length).toBeGreaterThan(0);
+    expect(((await env.CACHE.get("catalog:v2", "json")) as any).version).toBe("seeded");
+  });
+
+  it("cold cache plus an empty Webflow catalog is 502 and nothing is cached", async () => {
+    mockWebflow({ collections: { "fake-collection": [], "fake-styles": [], "fake-focus": [], "fake-durations": [] } });
+    const res = await get(await authed());
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "upstream_unavailable" });
+    expect(await env.CACHE.get("catalog:v2")).toBeNull();
+  });
+
+  it("a stale rebuild is skipped while the rebuild lock is held, and runs without it", async () => {
+    await seed(11 * 60_000);
+    await env.CACHE.put("catalog:rebuilding", "1", { expirationTtl: 60 });
+    const locked: string[] = [];
+    mockWebflow({ calls: locked });
+    expect(((await (await get(await authed())).json()) as any).version).toBe("seeded");
+    expect(locked).toHaveLength(0);
+    vi.restoreAllMocks();
+    await env.CACHE.delete("catalog:rebuilding");
+    const free: string[] = [];
+    mockWebflow({ calls: free });
+    await get(await authed());
+    expect(free.length).toBeGreaterThan(0);
+    expect(await env.CACHE.get("catalog:rebuilding")).toBeNull();
   });
 
   it("no cache plus a Webflow 500 is 502", async () => {
