@@ -52,9 +52,16 @@ export async function authRefresh(request: Request, env: Env, ctx: ExecutionCont
   const b = await body(request, "refreshToken");
   const oldHash = await sha256(b.refreshToken);
   const now = Date.now();
-  const row = await env.DB.prepare("SELECT member_id FROM refresh_tokens WHERE hash = ? AND revoked_at IS NULL AND expires_at > ?")
-    .bind(oldHash, now).first<{ member_id: string }>();
-  if (!row) throw grantError();
+  const row = await env.DB.prepare("SELECT member_id, revoked_at, expires_at FROM refresh_tokens WHERE hash = ?")
+    .bind(oldHash).first<{ member_id: string; revoked_at: number | null; expires_at: number }>();
+  if (!row || row.expires_at <= now) throw grantError();
+  if (row.revoked_at !== null) {
+    // A legit client never re-sends a token after rotation or logout, so a replay means it leaked:
+    // revoke the member's whole family. Logout-revoked tokens count too.
+    await env.DB.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE member_id = ? AND revoked_at IS NULL").bind(now, row.member_id).run();
+    console.warn("refresh token reuse: revoked all for", row.member_id);
+    throw grantError();
+  }
   // Before rotating, so an upstream failure doesn't burn the member's token.
   const m = await getMembership(env, ctx, row.member_id);
   const refreshToken = randomToken();

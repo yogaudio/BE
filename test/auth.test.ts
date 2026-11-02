@@ -135,7 +135,6 @@ describe("POST /auth/refresh", () => {
     expect(second.refreshToken).not.toBe(first.refreshToken);
     const old = await post("/auth/refresh", { refreshToken: first.refreshToken });
     expect([old.status, await err(old)]).toEqual([401, "invalid_grant"]);
-    expect((await post("/auth/refresh", { refreshToken: second.refreshToken })).status).toBe(200);
     const rows = (await env.DB.prepare("SELECT * FROM refresh_tokens").all<any>()).results;
     expect(JSON.stringify(rows)).not.toContain(second.refreshToken);
   });
@@ -153,6 +152,18 @@ describe("POST /auth/refresh", () => {
     vi.spyOn(Date, "now").mockReturnValue(Date.now() + 61 * 86400_000);
     const r = await post("/auth/refresh", { refreshToken });
     expect([r.status, await err(r)]).toEqual([401, "invalid_grant"]);
+  });
+
+  it("replaying a rotated token revokes all of that member's tokens, not other members'", async () => {
+    const first = await signedIn();
+    const other = await signedIn(); // second device of the same member
+    const stranger = await signedIn("fake-ms-token-noplan");
+    const second = (await (await post("/auth/refresh", { refreshToken: first.refreshToken })).json()) as any;
+    const replay = await post("/auth/refresh", { refreshToken: first.refreshToken });
+    expect([replay.status, await err(replay)]).toEqual([401, "invalid_grant"]);
+    expect((await post("/auth/refresh", { refreshToken: second.refreshToken })).status).toBe(401);
+    expect((await post("/auth/refresh", { refreshToken: other.refreshToken })).status).toBe(401);
+    expect((await post("/auth/refresh", { refreshToken: stranger.refreshToken })).status).toBe(200);
   });
 
   it("400 on a missing token", async () => {
@@ -195,6 +206,14 @@ describe("POST /auth/logout", () => {
     expect((await post("/auth/logout", { refreshToken: "never-issued" })).status).toBe(204);
     const r = await post("/auth/refresh", { refreshToken });
     expect([r.status, await err(r)]).toEqual([401, "invalid_grant"]);
+  });
+
+  it("replaying a logged-out token revokes the member's other tokens", async () => {
+    const a = await signedIn();
+    const b = await signedIn();
+    await post("/auth/logout", { refreshToken: a.refreshToken });
+    expect((await post("/auth/refresh", { refreshToken: a.refreshToken })).status).toBe(401);
+    expect((await post("/auth/refresh", { refreshToken: b.refreshToken })).status).toBe(401);
   });
 
   it("400 on a missing token", async () => {
