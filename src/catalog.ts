@@ -5,6 +5,7 @@ import { F, loadWebflowCollections, type WebflowCollections, type WebflowRawItem
 
 const FRESH_MS = 10 * 60_000;
 const KEY = "catalog:v2";
+const LOCK = "catalog:rebuilding";
 const AUDIO_URL = /^https:\/\/media\.transistor\.fm\//;
 
 export interface CatalogClass {
@@ -110,6 +111,10 @@ export function normalizeCatalog(raw: WebflowCollections): { catalog: CatalogV2;
 
 async function rebuild(env: Env): Promise<Entry> {
   const { catalog, audio } = normalizeCatalog(await loadWebflowCollections(env));
+  if (catalog.classes.length === 0) {
+    console.warn("catalog rebuild: empty catalog, keeping cached entry");
+    throw new ApiError(502, "upstream_unavailable");
+  }
   const version = (await sha256(JSON.stringify(catalog))).slice(0, 16);
   const entry: Entry = { version, builtAt: Date.now(), json: JSON.stringify({ version, ...catalog }), audio: Object.fromEntries(audio) };
   await env.CACHE.put(KEY, JSON.stringify(entry)).catch(() => {});
@@ -126,9 +131,15 @@ const etagMatches = (header: string | null, version: string) =>
 export async function getCatalogEntry(env: Env, ctx: ExecutionContext): Promise<Entry> {
   const cached = await env.CACHE.get<Entry>(KEY, "json").catch(() => null);
   if (cached) {
-    // stale-while-revalidate; concurrent rebuilds are harmless (last write wins)
-    if (Date.now() - cached.builtAt >= FRESH_MS) {
-      ctx.waitUntil(rebuild(env).catch((e) => console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown")));
+    // stale-while-revalidate; a short KV lock keeps concurrent stale requests from all rebuilding
+    // ponytail: KV is eventually consistent, so this cuts the stampede, it does not guarantee one rebuild; rebuilds are idempotent so that is fine
+    if (Date.now() - cached.builtAt >= FRESH_MS && !(await env.CACHE.get(LOCK).catch(() => null))) {
+      await env.CACHE.put(LOCK, "1", { expirationTtl: 60 }).catch(() => {});
+      ctx.waitUntil(
+        rebuild(env)
+          .catch((e) => console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown"))
+          .finally(() => env.CACHE.delete(LOCK).catch(() => {})),
+      );
     }
     return cached;
   }
