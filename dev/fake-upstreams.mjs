@@ -58,12 +58,16 @@ const loginPage = () => {
   if (!re.test(html)) throw new Error("login-page/app-login.html has no window.YOGAUDIO_CODE_URL constant; the fake /app-login needs it");
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake app login</title>
 <h1>Fake yogaudio.com /app-login</h1>
-<p>Fake page, local dev only. Log in with any password (<code>wrong</code> fails) and one of: ${Object.keys(FAKE_LOGINS).map((e) => `<code>${e}</code>`).join(", ")}.</p>
+<p>Fake page, local dev only. Log in with any password (<code>wrong</code> fails; add <code>?session=active@fake.test</code> to simulate an existing session) and one of: ${Object.keys(FAKE_LOGINS).map((e) => `<code>${e}</code>`).join(", ")}.</p>
 <script>
 const logins = ${JSON.stringify(FAKE_LOGINS)};
+let session = new URLSearchParams(location.search).get("session");
+if (!logins[session]) session = null;
 window.$memberstackDom = {
-  getCurrentMember: async () => ({ data: null }),
-  getMemberCookie: () => null,
+  // ?session=<fake email> simulates a member who is already logged in; logout() clears it. ?logout_fails=1 makes logout reject.
+  getCurrentMember: async () => ({ data: session ? { auth: { email: session } } : null }),
+  getMemberCookie: () => (session ? logins[session] : null),
+  logout: async () => { if (new URLSearchParams(location.search).get("logout_fails")) throw new Error("logout failed"); session = null; },
   sendMemberResetPasswordEmail: async () => ({}),
   loginMemberEmailPassword: async ({ email, password }) => {
     const t = logins[email];
