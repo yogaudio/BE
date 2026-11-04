@@ -6,7 +6,6 @@ export type ErrorCode =
   | "not_found"
   | "rate_limited"
   | "upstream_unavailable"
-  | "stripe_unavailable"
   | "internal";
 
 // Handlers throw this; the router turns it into `{ "error": code }` with the status.

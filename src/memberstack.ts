@@ -43,9 +43,11 @@ export async function verifyMemberToken(env: Env, token: string): Promise<string
 // verified 2026-10-21 against real data
 async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
-  if (res.status === 404) return { active: false, email: "", at: Date.now() }; // member deleted
   if (!res.ok) throw new ApiError(502, "upstream_unavailable");
-  const m = ((await res.json().catch(() => null)) as { data?: any } | null)?.data;
+  const body = (await res.json().catch(() => undefined)) as { data?: any } | null | undefined;
+  if (!body) throw new ApiError(502, "upstream_unavailable");
+  const m = body.data;
+  if (m === null) return { active: false, email: "", at: Date.now() }; // docs: a missing member is 200 with data null
   if (!m) throw new ApiError(502, "upstream_unavailable");
   // Status compare is case-insensitive; ACTIVE_PLAN_STATUSES is the allow-list, so any other status (PAST_DUE, CANCELED) does not unlock.
   const statuses = list(env.ACTIVE_PLAN_STATUSES).map((s) => s.toLowerCase());
@@ -56,29 +58,31 @@ async function fetchMembership(env: Env, memberId: string): Promise<Cached> {
   return { active, email: String(m.auth?.email ?? ""), at: Date.now() };
 }
 
-// Admin API: GET /members/:id -> { data: { stripeCustomerId } }. "gone" = member already deleted.
-// verified 2026-11-02: data.stripeCustomerId (docs + live read)
-export async function getStripeCustomerId(env: Env, memberId: string): Promise<string | null | "gone"> {
+// Admin API: GET /members/:id. A missing member is 200 with "data": null (never 404; a 404 is a wrong base URL, so it is an error).
+// Resolves true if the member exists, false if already gone.
+export async function memberExists(env: Env, memberId: string): Promise<boolean> {
   const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { headers: headers(env) }, TIMEOUT_MS);
-  if (res.status === 404) return "gone";
-  if (!res.ok) throw new ApiError(502, "upstream_unavailable");
-  const m = ((await res.json().catch(() => null)) as { data?: { stripeCustomerId?: unknown; planConnections?: { type?: string; status?: string; payment?: unknown }[] } } | null)?.data;
-  if (!m) throw new ApiError(502, "upstream_unavailable");
-  if (typeof m.stripeCustomerId === "string" && m.stripeCustomerId) return m.stripeCustomerId;
-  // Fail closed: a paid plan that is not CANCELED may still bill, and without a customer id we cannot cancel it.
-  if ((m.planConnections ?? []).some((c) => (c.type !== "FREE" || c.payment != null) && String(c.status).toUpperCase() !== "CANCELED")) {
-    console.warn("account delete: paid plan without stripe customer id", memberId);
+  if (!res.ok) {
+    console.warn("memberstack get member: status", res.status);
     throw new ApiError(502, "upstream_unavailable");
   }
-  return null;
+  const body = (await res.json().catch(() => undefined)) as { data?: unknown } | null | undefined;
+  if (!body || !("data" in body)) throw new ApiError(502, "upstream_unavailable");
+  return body.data !== null;
 }
 
-// Admin API: DELETE /members/:id. 2xx or 404 (already gone) is success.
-// verify in M3: delete endpoint and whether it cancels Stripe itself
+// Admin API: DELETE /members/:id with a JSON body. Memberstack cancels the member's Stripe subscriptions and keeps the Stripe customer.
+// Any non-2xx (a 400 "no member" included) is an error; callers check memberExists first.
 export async function deleteMember(env: Env, memberId: string): Promise<void> {
-  const res = await upstreamFetch(`${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`, { method: "DELETE", headers: headers(env) }, TIMEOUT_MS);
-  if (!res.ok) console.warn("memberstack delete: status", res.status);
-  if (!res.ok && res.status !== 404) throw new ApiError(502, "upstream_unavailable");
+  const res = await upstreamFetch(
+    `${env.MEMBERSTACK_API_BASE}/members/${encodeURIComponent(memberId)}`,
+    { method: "DELETE", headers: headers(env), body: JSON.stringify({ cancelStripeSubscriptions: true, deleteStripeCustomer: false }) },
+    TIMEOUT_MS,
+  );
+  if (!res.ok) {
+    console.warn("memberstack delete: status", res.status);
+    throw new ApiError(502, "upstream_unavailable");
+  }
 }
 
 export async function getMembership(env: Env, _ctx: ExecutionContext, memberId: string): Promise<Membership> {

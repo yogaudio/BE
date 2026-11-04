@@ -1,8 +1,9 @@
-// Fake Memberstack, Stripe, Webflow and the yogaudio.com login page, for local dev. Node built-ins only.
+// Fake Memberstack, Webflow and the yogaudio.com login page, for local dev. Node built-ins only.
 // Run: node dev/fake-upstreams.mjs   (port 8788)
 // Faults: FAKE_FAULT=slow|500|drop env var, `?fault=` on any request, or at runtime
-//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|stripe|webflow]
-// State (deleted members, cancelled subscriptions) lives for the process; GET /_reset restores it.
+//   GET /_fault?mode=slow|500|drop|off[&service=memberstack|webflow]
+// State (deleted members) lives for the process; GET /_reset restores it.
+// GET /_last_delete returns the JSON body of the last Memberstack DELETE (to see both Stripe flags arrive).
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 
@@ -11,7 +12,6 @@ const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8787";
 const KEYS = {
   memberstack: process.env.MEMBERSTACK_SECRET_KEY ?? "sk_fake_memberstack",
   webflow: process.env.WEBFLOW_TOKEN ?? "fake-webflow-token",
-  stripe: process.env.STRIPE_RESTRICTED_KEY ?? "rk_fake_stripe",
 };
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const members = fixture("members.json");
@@ -22,9 +22,8 @@ const webflow = {
   "fake-focus": fixture("webflow-focus-areas.json"),
   "fake-durations": fixture("webflow-durations.json"),
 };
-const subsFixture = fixture("stripe-subscriptions.json");
-let subs = structuredClone(subsFixture);
 const deleted = new Set();
+let lastDeleteBody = null;
 
 let faultAll = process.env.FAKE_FAULT || "off";
 const faultBy = {};
@@ -93,10 +92,12 @@ createServer(async (req, res) => {
   }
 
   if (p === "/_reset") {
-    subs = structuredClone(subsFixture);
     deleted.clear();
+    lastDeleteBody = null;
     return send(res, 200, { reset: true });
   }
+
+  if (p === "/_last_delete") return send(res, 200, { body: lastDeleteBody });
 
   if (p === "/app-login") {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
@@ -122,32 +123,18 @@ createServer(async (req, res) => {
     const mm = p.match(/^\/memberstack\/members\/([^/]+)$/);
     if (req.method === "GET" && mm) {
       const m = Object.values(members).find((x) => x.id === mm[1]);
-      return m && !deleted.has(m.id) ? send(res, 200, { data: m }) : send(res, 404, { message: "member not found" });
+      return m && !deleted.has(m.id) ? send(res, 200, { data: m }) : send(res, 200, { data: null }); // docs: missing member = 200 data null
     }
     // DELETE /members/:id  https://developers.memberstack.com/admin-rest-api/members#delete-member
     if (req.method === "DELETE" && mm) {
+      let raw = "";
+      for await (const c of req) raw += c;
+      try { lastDeleteBody = raw ? JSON.parse(raw) : null; } catch { lastDeleteBody = { unparseable: true }; }
+      console.log("fake memberstack DELETE", mm[1], "body:", JSON.stringify(lastDeleteBody));
       const m = Object.values(members).find((x) => x.id === mm[1]);
-      if (!m || deleted.has(m.id)) return send(res, 404, { message: "member not found" });
+      if (!m || deleted.has(m.id)) return send(res, 400, { code: "generic-message", message: "There is no member with this identifier." });
       deleted.add(m.id);
-      res.writeHead(204);
-      return res.end();
-    }
-  }
-
-  // Stripe API (restricted key). https://docs.stripe.com/api/subscriptions
-  if (p.startsWith("/stripe/")) {
-    if (await applyFault("stripe", url, req, res)) return;
-    if (!auth("stripe", req.headers.authorization === `Bearer ${KEYS.stripe}`)) return;
-    if (req.method === "GET" && p === "/stripe/v1/subscriptions") {
-      const list = subs[url.searchParams.get("customer")];
-      return list ? send(res, 200, { object: "list", data: list, has_more: false }) : send(res, 404, { error: { message: "No such customer" } });
-    }
-    const sm = p.match(/^\/stripe\/v1\/subscriptions\/([^/]+)$/);
-    if (req.method === "DELETE" && sm) {
-      const sub = Object.values(subs).flat().find((x) => x.id === sm[1]);
-      if (!sub) return send(res, 404, { error: { message: "No such subscription" } });
-      sub.status = "canceled";
-      return send(res, 200, sub);
+      return send(res, 200, { data: { id: m.id } });
     }
   }
 

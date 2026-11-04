@@ -42,114 +42,87 @@ beforeEach(async () => {
 });
 
 describe("POST /account/delete", () => {
-  it("is off (404 not_found, no outbound fetch) while STRIPE_RESTRICTED_KEY is empty", async () => {
-    const calls: string[] = [];
-    mockAccountUpstreams({ calls });
-    const key = env.STRIPE_RESTRICTED_KEY;
-    try {
-      for (const off of ["", undefined as unknown as string]) {
-        env.STRIPE_RESTRICTED_KEY = off;
-        const res = await del(IDS.inactive); // a member with no Stripe customer
-        expect(res.status).toBe(404);
-        expect(await res.json()).toEqual({ error: "not_found" });
-      }
-    } finally {
-      env.STRIPE_RESTRICTED_KEY = key;
-    }
-    expect(calls).toEqual([]);
-  });
-
-  it("active member: 204, ordered calls, local data gone, others untouched", async () => {
+  it("present member: 204, GET then DELETE, local data gone, others untouched", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
     const res = await del();
     expect(res.status).toBe(204);
     expect(await res.text()).toBe("");
-    expect(calls).toEqual([
-      `GET /memberstack/members/${IDS.active}`,
-      "GET /stripe/v1/subscriptions",
-      "DELETE /stripe/v1/subscriptions/sub_fake_active",
-      `DELETE /memberstack/members/${IDS.active}`,
-    ]);
+    expect(calls).toEqual([`GET /memberstack/members/${IDS.active}`, `DELETE /memberstack/members/${IDS.active}`]);
     await cleaned(IDS.active);
     await kept(OTHER);
   });
 
-  it("canceled member: both live subscriptions cancelled", async () => {
-    await seed(IDS.canceled);
+  it("DELETE carries both Stripe flags as JSON", async () => {
+    const deleteRequests: { headers: Headers; body: unknown }[] = [];
+    mockAccountUpstreams({ deleteRequests });
+    expect((await del()).status).toBe(204);
+    expect(deleteRequests).toHaveLength(1);
+    expect(deleteRequests[0].body).toEqual({ cancelStripeSubscriptions: true, deleteStripeCustomer: false });
+    expect(deleteRequests[0].headers.get("content-type")).toBe("application/json");
+  });
+
+  it("the member id comes from the token; a body or query naming another member is ignored", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
-    expect((await del(IDS.canceled)).status).toBe(204);
-    expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(2);
-    await cleaned(IDS.canceled);
+    const headers = { Authorization: `Bearer ${await signAccessToken(env, IDS.active)}`, "Content-Type": "application/json" };
+    const ctx = createExecutionContext();
+    const res = await route(
+      new Request(`https://api.test/account/delete?member_id=${OTHER}&id=${OTHER}`, { method: "POST", headers, body: JSON.stringify({ member_id: OTHER, id: OTHER }) }),
+      env,
+      ctx,
+    );
+    await waitOnExecutionContext(ctx);
+    expect(res.status).toBe(204);
+    expect(calls.every((c) => c.endsWith(IDS.active))).toBe(true);
+    await cleaned(IDS.active);
+    await kept(OTHER);
   });
 
-  it("inactive member (no Stripe customer): no Stripe calls, member deleted", async () => {
-    await seed(IDS.inactive);
+  it("already gone (GET 200 data null): no DELETE, local cleanup runs, a second call is 204 too", async () => {
     const calls: string[] = [];
     mockAccountUpstreams({ calls });
-    expect((await del(IDS.inactive)).status).toBe(204);
-    expect(calls.some((c) => c.includes("/stripe/"))).toBe(false);
-    expect(deletes(calls)).toEqual([`DELETE /memberstack/members/${IDS.inactive}`]);
-    await cleaned(IDS.inactive);
-  });
-
-  it("paid plan but no Stripe customer id: 502 upstream_unavailable, nothing deleted anywhere", async () => {
-    const calls: string[] = [];
-    const paid = { type: "SUBSCRIPTION", status: "ACTIVE", payment: { amount: 500 } };
-    mockAccountUpstreams({ calls, memberOverrides: { stripeCustomerId: null, planConnections: [paid] } });
-    const res = await del();
-    expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ error: "upstream_unavailable" });
-    expect(calls).toEqual([`GET /memberstack/members/${IDS.active}`]);
-    await kept(IDS.active);
-  });
-
-  it("free plan and no Stripe customer id still deletes", async () => {
-    const calls: string[] = [];
-    mockAccountUpstreams({ calls, memberOverrides: { stripeCustomerId: null } }); // fixture plan is FREE
-    expect((await del()).status).toBe(204);
-    expect(deletes(calls)).toEqual([`DELETE /memberstack/members/${IDS.active}`]);
-    await cleaned(IDS.active);
-  });
-
-  it("member already gone: no Stripe or DELETE calls, local cleanup still runs", async () => {
-    const calls: string[] = [];
-    mockAccountUpstreams({ calls, memberGetStatus: 404 });
-    expect((await del()).status).toBe(204);
-    expect(calls).toEqual([`GET /memberstack/members/${IDS.active}`]);
-    await cleaned(IDS.active);
-  });
-
-  it("Stripe list 500: 502 stripe_unavailable, nothing deleted anywhere", async () => {
-    const calls: string[] = [];
-    mockAccountUpstreams({ calls, stripeStatus: 500 });
-    const res = await del();
-    expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ error: "stripe_unavailable" });
-    expect(calls.some((c) => c.startsWith("DELETE /memberstack"))).toBe(false);
-    await kept(IDS.active);
-  });
-
-  it("Memberstack DELETE 500 after cancel: 502, rows kept; a retry is 204 with no Stripe DELETE", async () => {
-    const calls: string[] = [];
-    const opts: AccountUpstreamOpts = { calls, memberDeleteStatus: 500 };
-    mockAccountUpstreams(opts);
-    const res = await del();
-    expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ error: "upstream_unavailable" });
-    expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(1);
-    await kept(IDS.active);
-
-    opts.memberDeleteStatus = undefined;
+    await seed(IDS.noPlan);
+    expect((await del(IDS.noPlan)).status).toBe(204); // deletes it
+    await seed(IDS.noPlan); // leftover rows from a failed earlier cleanup
     calls.length = 0;
+    expect((await del(IDS.noPlan)).status).toBe(204);
+    expect(calls).toEqual([`GET /memberstack/members/${IDS.noPlan}`]);
+    await cleaned(IDS.noPlan);
+  });
+
+  it("DELETE 400: 502 upstream_unavailable, rows and cache untouched", async () => {
+    mockAccountUpstreams({ memberDeleteStatus: 400 });
+    const res = await del();
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "upstream_unavailable" });
+    await kept(IDS.active);
+  });
+
+  it("DELETE 500: 502, rows kept; a retry is 204", async () => {
+    const opts: AccountUpstreamOpts = { memberDeleteStatus: 500 };
+    mockAccountUpstreams(opts);
+    expect((await del()).status).toBe(502);
+    await kept(IDS.active);
+    opts.memberDeleteStatus = undefined;
     expect((await del()).status).toBe(204);
-    expect(deletes(calls).filter((c) => c.includes("/stripe/"))).toHaveLength(0);
-    expect(deletes(calls)).toEqual([`DELETE /memberstack/members/${IDS.active}`]);
     await cleaned(IDS.active);
   });
 
-  it("Memberstack DELETE failure logs the status; success logs member id and count, never secrets", async () => {
+  it("GET 500, GET 404 or a network error: 502, no DELETE, nothing deleted", async () => {
+    for (const opts of [{ memberGetStatus: 500 }, { memberGetStatus: 404 }, { memberDown: true }]) {
+      vi.restoreAllMocks();
+      const calls: string[] = [];
+      mockAccountUpstreams({ calls, ...opts });
+      const res = await del();
+      expect(res.status, JSON.stringify(opts)).toBe(502);
+      expect(await res.json()).toEqual({ error: "upstream_unavailable" });
+      expect(deletes(calls)).toEqual([]);
+      await kept(IDS.active);
+    }
+  });
+
+  it("logs the failure status and the deleted id, never the secret key or Bearer", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const opts: AccountUpstreamOpts = { memberDeleteStatus: 500 };
@@ -158,8 +131,8 @@ describe("POST /account/delete", () => {
     expect(warn.mock.calls.some((c) => c.includes(500))).toBe(true);
     opts.memberDeleteStatus = undefined;
     expect((await del()).status).toBe(204);
-    expect(log).toHaveBeenCalledWith("account deleted:", IDS.active, "subscriptions cancelled:", 0);
-    expect(JSON.stringify([...warn.mock.calls, ...log.mock.calls])).not.toMatch(/rk_fake_stripe|Bearer/);
+    expect(log).toHaveBeenCalledWith("account deleted:", IDS.active);
+    expect(JSON.stringify([...warn.mock.calls, ...log.mock.calls])).not.toMatch(new RegExp(`${env.MEMBERSTACK_SECRET_KEY}|Bearer`));
   });
 
   it("401 without a token or with a bad one, no upstream calls", async () => {

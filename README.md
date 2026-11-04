@@ -1,27 +1,27 @@
 # yogaudio-api
 
-Cloudflare Worker behind the yogaudio reader app. It checks Memberstack membership, issues short-lived access tokens and rotating refresh tokens (D1), serves the Webflow class catalog (KV cache), resolves audio URLs only for active members, and deletes an account on request (`POST /account/delete`, M3: returns 404 until `STRIPE_RESTRICTED_KEY` is set; it cancels Stripe subscriptions, deletes the Memberstack member, then clears our tokens and cache; retry-safe). No framework; a plain router in `src/index.ts`.
+Cloudflare Worker behind the yogaudio reader app. It checks Memberstack membership, issues short-lived access tokens and rotating refresh tokens (D1), serves the Webflow class catalog (KV cache), resolves audio URLs only for active members, and deletes an account on request (`POST /account/delete`, M3: asks Memberstack to delete the member (cancelling its Stripe subscriptions), then clears our tokens and cache; retry-safe). No framework; a plain router in `src/index.ts`.
 
 ## Local dev (with fakes)
 
 ```
 cp .dev.vars.example .dev.vars   # fake secrets, git-ignored
 npm install
-npm run fakes                    # terminal 1: fake Memberstack/Stripe/Webflow + /app-login on :8788
+npm run fakes                    # terminal 1: fake Memberstack/Webflow + /app-login on :8788
 npm run dev                      # terminal 2: applies local D1 migrations, runs wrangler dev on :8787
 ```
 
 Try `curl localhost:8787/health` and open http://localhost:8788/app-login.
 
-Fake auth: Memberstack `X-API-KEY`, Stripe `Authorization: Bearer rk_fake_stripe`, Webflow `Authorization: Bearer`; a wrong key gets 401. Fake member tokens: `fake-ms-token-active` (free ACTIVE), `fake-ms-token-noplan`, `fake-ms-token-canceled`, `fake-ms-token-requires-payment`. Fixtures live in `dev/fixtures/`.
+Fake auth: Memberstack `X-API-KEY`, Webflow `Authorization: Bearer`; a wrong key gets 401. Fake member tokens: `fake-ms-token-active` (free ACTIVE), `fake-ms-token-noplan`, `fake-ms-token-canceled`, `fake-ms-token-requires-payment`. Fixtures live in `dev/fixtures/`.
 
-Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request, or at runtime `curl 'localhost:8788/_fault?mode=500&service=webflow'` (`mode=off` clears; services: memberstack, stripe, webflow). The fakes keep state (deleted members, cancelled subscriptions) for the process; `curl localhost:8788/_reset` restores it.
+Fault switches: `FAKE_FAULT=slow|500|drop npm run fakes`, `?fault=` on a request, or at runtime `curl 'localhost:8788/_fault?mode=500&service=webflow'` (`mode=off` clears; services: memberstack, webflow). The fakes keep state (deleted members) for the process; `curl localhost:8788/_reset` restores it.
 
 ## Config
 
-Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `STRIPE_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production Webflow collection ids are real; the production D1/KV ids are real too (Cloudflare account `a41e300f…`); bindings and vars are not inherited between environments.
+Vars in `wrangler.toml` (no secrets): `LOGIN_PAGE_ORIGIN`, `ACTIVE_PLAN_STATUSES`, `ALLOWED_PLAN_IDS`, `MEMBERSTACK_API_BASE`, `WEBFLOW_API_BASE`, `WEBFLOW_COLLECTION_ID`, `WF_STYLES_COLLECTION_ID`, `WF_FOCUS_COLLECTION_ID`, `WF_DURATIONS_COLLECTION_ID`. Top-level vars target the fakes (local dev). `[env.production]` holds the real values: `https://www.yogaudio.com`, `https://admin.memberstack.com`, `https://api.webflow.com`. The production Webflow collection ids are real; the production D1/KV ids are real too (Cloudflare account `a41e300f…`); bindings and vars are not inherited between environments.
 
-Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TOKEN_SIGNING_KEY` (all three set in production), and `STRIPE_RESTRICTED_KEY` (not set yet: `/account/delete` returns 404 until M3).
+Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SECRET_KEY`, `WEBFLOW_TOKEN`, `TOKEN_SIGNING_KEY` (all three set in production).
 
 ## Login page
 
@@ -31,7 +31,7 @@ Secrets (`wrangler secret put <NAME>`; locally in `.dev.vars`): `MEMBERSTACK_SEC
 
 Deployed to the client's Cloudflare account (`a41e300f…`) as worker `yogaudio-api`: D1 and KV created, migration applied remotely, secrets MEMBERSTACK_SECRET_KEY, WEBFLOW_TOKEN and TOKEN_SIGNING_KEY set. `ACTIVE_PLAN_STATUSES` is `ACTIVE,TRIALING` (`REQUIRES_PAYMENT` members get no access). The Memberstack verify-token and Webflow calls were proven by the live login and catalog (2026-10-23).
 
-Still open for M3: `wrangler secret put STRIPE_RESTRICTED_KEY --env production` (restricted key: Customers read, Subscriptions write), then verify the Stripe and Memberstack delete paths marked "verify in M3" in `src/` (the Stripe customer field `stripeCustomerId` is already verified; a member with an unCANCELED paid plan and no customer id gets 502 and is not deleted). Sign in with Apple (App Review rule 4.8) is needed only if Google or another third-party login is ever added.
+Account deletion (`POST /account/delete`) goes through Memberstack only: `DELETE /members/:id` with `{"cancelStripeSubscriptions": true, "deleteStripeCustomer": false}` (Memberstack cancels the subscriptions and keeps the Stripe customer). A member that is already gone reads as `GET /members/:id` 200 with `data: null`, so a retry just finishes the local cleanup. Still to verify live in M3: the delete call against a real test member. Sign in with Apple (App Review rule 4.8) is needed only if Google or another third-party login is ever added.
 
 Redeploy: `wrangler deploy --env production`. To watch a first sign-in: `wrangler tail --env production`; a run of `memberstack verify-token: status 401/403` means `MEMBERSTACK_SECRET_KEY` is wrong, not the member's token.
 

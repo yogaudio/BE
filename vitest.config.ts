@@ -12,7 +12,6 @@ export default defineConfig(async () => {
           bindings: {
             MEMBERSTACK_SECRET_KEY: "sk_fake_memberstack",
             WEBFLOW_TOKEN: "fake-webflow-token",
-            STRIPE_RESTRICTED_KEY: "rk_fake_stripe",
             TOKEN_SIGNING_KEY: "fake-signing-key-at-least-32-bytes-long-000",
             TEST_MIGRATIONS: migrations,
           },

@@ -5,7 +5,6 @@ import wfClasses from "../dev/fixtures/webflow-classes.json";
 import wfDurations from "../dev/fixtures/webflow-durations.json";
 import wfFocus from "../dev/fixtures/webflow-focus-areas.json";
 import wfStyles from "../dev/fixtures/webflow-styles.json";
-import stripeSubs from "../dev/fixtures/stripe-subscriptions.json";
 
 // Fake Memberstack on top of globalThis.fetch, same shapes as dev/fake-upstreams.mjs.
 export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overrides?: Record<string, unknown> } = {}) {
@@ -20,7 +19,7 @@ export function mockMemberstack(opts: { down?: boolean; calls?: string[]; overri
     }
     const id = url.pathname.split("/").pop();
     const m = Object.values(members).find((x) => x.id === id);
-    return m ? Response.json({ data: { ...m, ...opts.overrides } }) : Response.json({}, { status: 404 });
+    return m ? Response.json({ data: { ...m, ...opts.overrides } }) : Response.json({ data: null }); // docs: missing member = 200 data null
   });
 }
 
@@ -48,49 +47,34 @@ export function mockWebflow(opts: { pageSize?: number; status?: number; failColl
   });
 }
 
-// Fake Memberstack (GET/DELETE member) + Stripe (list/cancel subscriptions) for the account-delete flow.
-// Stateful per call: a cancelled subscription then lists as canceled, a deleted member then answers 404.
-// `opts` is read on every request, so a test may change it between requests.
+// Fake Memberstack (GET/DELETE member) for the account-delete flow, shaped like the docs: GET of a missing member is 200 data null,
+// DELETE of a missing member is 400. Stateful: a deleted member then reads as gone. `opts` is read on every request.
+// `deleteRequests` captures each DELETE's headers and parsed JSON body.
 export interface AccountUpstreamOpts {
   calls?: string[];
-  stripeStatus?: number; // forces every Stripe response status
-  stripeDown?: boolean; // Stripe network error
-  stripeResourceMissing?: boolean; // list answers 400 with error.code resource_missing
+  deleteRequests?: { headers: Headers; body: unknown }[];
   memberDeleteStatus?: number;
   memberGetStatus?: number;
-  memberOverrides?: Record<string, unknown>; // merged into every member GET
+  memberDown?: boolean; // GET network error
 }
 export function mockAccountUpstreams(opts: AccountUpstreamOpts = {}) {
   const calls = opts.calls ?? [];
-  const subs = structuredClone(stripeSubs) as Record<string, { id: string; status: string }[]>;
   const live = structuredClone(members) as Record<string, { id: string }>;
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const method = init?.method ?? "GET";
     calls.push(`${method} ${url.pathname}`);
-    if (url.pathname.startsWith("/stripe/")) {
-      if (opts.stripeDown) throw new TypeError("fetch failed");
-      if (opts.stripeStatus) return Response.json({ error: "boom" }, { status: opts.stripeStatus });
-      if (new Headers(init?.headers).get("authorization") !== `Bearer ${env.STRIPE_RESTRICTED_KEY}`) return Response.json({}, { status: 401 });
-      if (url.pathname === "/stripe/v1/subscriptions") {
-        if (opts.stripeResourceMissing) return Response.json({ error: { code: "resource_missing", param: "customer" } }, { status: 400 });
-        const list = subs[url.searchParams.get("customer") ?? ""];
-        return list ? Response.json({ data: list }) : Response.json({ error: "no such customer" }, { status: 404 });
-      }
-      const sub = Object.values(subs).flat().find((s) => s.id === url.pathname.split("/").pop());
-      if (!sub || method !== "DELETE") return Response.json({}, { status: 404 });
-      sub.status = "canceled";
-      return Response.json(sub);
-    }
     const id = url.pathname.split("/").pop();
     const key = Object.keys(live).find((k) => live[k].id === id);
     if (method === "DELETE") {
+      opts.deleteRequests?.push({ headers: new Headers(init?.headers), body: JSON.parse(String(init?.body)) });
       if (opts.memberDeleteStatus) return new Response(null, { status: opts.memberDeleteStatus });
-      if (!key) return Response.json({}, { status: 404 });
+      if (!key) return Response.json({ code: "generic-message", message: "There is no member with this identifier." }, { status: 400 });
       delete live[key];
-      return new Response(null, { status: 204 });
+      return Response.json({ data: { id } });
     }
+    if (opts.memberDown) throw new TypeError("fetch failed");
     if (opts.memberGetStatus) return Response.json({}, { status: opts.memberGetStatus });
-    return key ? Response.json({ data: { ...live[key], ...opts.memberOverrides } }) : Response.json({}, { status: 404 });
+    return Response.json({ data: key ? live[key] : null });
   });
 }
