@@ -1,6 +1,6 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deleteMember, getMembership, getStripeCustomerId, verifyMemberToken } from "../src/memberstack";
+import { deleteMember, getMembership, memberExists, verifyMemberToken } from "../src/memberstack";
 import shapes from "../dev/fixtures/memberstack-member-shapes.json";
 import { IDS, mockAccountUpstreams, mockMemberstack } from "./helpers";
 
@@ -34,7 +34,7 @@ describe("getMembership", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("a deleted member (404) is inactive, and an inactive entry is always re-asked", async () => {
+  it("a deleted member (200, data null) is inactive, and an inactive entry is always re-asked", async () => {
     const calls: string[] = [];
     mockMemberstack({ calls });
     expect(await getMembership(env, ctx(), "mem_deleted")).toEqual({ active: false, stale: false, email: "" });
@@ -166,36 +166,41 @@ describe("verifyMemberToken other 4xx", () => {
   });
 });
 
-describe("getStripeCustomerId", () => {
-  it("returns the id", async () => {
+describe("memberExists", () => {
+  it("true for a present member", async () => {
     mockAccountUpstreams();
-    expect(await getStripeCustomerId(env, IDS.active)).toBe("cus_fake_active");
+    expect(await memberExists(env, IDS.active)).toBe(true);
   });
-  it("null when the member has no field", async () => {
+  it("false on 200 data null", async () => {
     mockAccountUpstreams();
-    expect(await getStripeCustomerId(env, IDS.inactive)).toBeNull();
+    expect(await memberExists(env, "mem_nobody")).toBe(false);
   });
-  it("'gone' on 404", async () => {
-    mockAccountUpstreams();
-    expect(await getStripeCustomerId(env, "mem_nobody")).toBe("gone");
+  it("404 and 500 throw upstream_unavailable", async () => {
+    for (const memberGetStatus of [404, 500]) {
+      mockAccountUpstreams({ memberGetStatus });
+      await expect(memberExists(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+      vi.restoreAllMocks();
+    }
   });
-  it("500 throws upstream_unavailable", async () => {
-    mockAccountUpstreams({ memberGetStatus: 500 });
-    await expect(getStripeCustomerId(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+  it("an unparseable body throws upstream_unavailable", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("not json"));
+    await expect(memberExists(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
   });
 });
 
 describe("deleteMember", () => {
-  it("204 is OK, then the member is gone", async () => {
-    mockAccountUpstreams();
+  it("sends both Stripe flags as JSON, then the member is gone", async () => {
+    const deleteRequests: { headers: Headers; body: unknown }[] = [];
+    mockAccountUpstreams({ deleteRequests });
     await deleteMember(env, IDS.active);
-    expect(await getStripeCustomerId(env, IDS.active)).toBe("gone");
+    expect(deleteRequests[0].body).toEqual({ cancelStripeSubscriptions: true, deleteStripeCustomer: false });
+    expect(deleteRequests[0].headers.get("content-type")).toBe("application/json");
+    expect(await memberExists(env, IDS.active)).toBe(false);
   });
-  it("404 is OK", async () => {
+  it("400 and 500 throw upstream_unavailable", async () => {
     mockAccountUpstreams();
-    await expect(deleteMember(env, "mem_nobody")).resolves.toBeUndefined();
-  });
-  it("500 throws upstream_unavailable", async () => {
+    await expect(deleteMember(env, "mem_nobody")).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
+    vi.restoreAllMocks();
     mockAccountUpstreams({ memberDeleteStatus: 500 });
     await expect(deleteMember(env, IDS.active)).rejects.toMatchObject({ status: 502, code: "upstream_unavailable" });
   });
