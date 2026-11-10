@@ -81,11 +81,13 @@ export function normalizeCatalog(raw: WebflowCollections): { catalog: CatalogV2;
   }));
   const usedStyles = new Set<string>(), usedFocus = new Set<string>(), usedDurations = new Set<string>();
   const audio = new Map<string, ClassAudio>();
-  const classes = raw.classes.flatMap((i): CatalogClass[] => {
+  const numbered = raw.classes.flatMap((i): { c: CatalogClass; n: number | null }[] => {
     const f = i.fieldData;
     const title = text(f[F.name]);
     const url = f[F.audio];
     if (!title || typeof url !== "string" || !AUDIO_URL.test(url)) return [];
+    const num = f[F.classNumber];
+    const n = typeof num === "number" && Number.isFinite(num) ? num : null;
     const styleIds = refs(f[F.style]).filter((r) => styleNames.has(r));
     const focusAreaIds = refs(f[F.focusAreas]).filter((r) => focusNames.has(r));
     const d = typeof f[F.durations] === "string" ? durations.get(f[F.durations] as string) : undefined;
@@ -94,8 +96,12 @@ export function normalizeCatalog(raw: WebflowCollections): { catalog: CatalogV2;
     focusAreaIds.forEach((r) => usedFocus.add(r));
     if (d) usedDurations.add(f[F.durations] as string);
     audio.set(i.id, { url, durationSec });
-    return [{ id: i.id, slug: String(f[F.slug] ?? ""), title, description: plainText(f[F.description]), durationSec, styleIds, focusAreaIds, durationId: d ? (f[F.durations] as string) : null }];
+    return [{ n, c: { id: i.id, slug: String(f[F.slug] ?? ""), title, description: plainText(f[F.description]), durationSec, styleIds, focusAreaIds, durationId: d ? (f[F.durations] as string) : null } }];
   });
+  // Class # descending, unnumbered last; ties keep Webflow order (Array.prototype.sort is stable).
+  const classes = numbered
+    .sort((x, y) => (x.n === y.n ? 0 : x.n === null ? 1 : y.n === null ? -1 : y.n - x.n))
+    .map((x) => x.c);
   const options = (names: Map<string, string>, used: Set<string>) =>
     [...used].map((id) => ({ id, name: names.get(id)! })).sort(byName);
   return {
