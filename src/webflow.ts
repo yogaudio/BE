@@ -12,6 +12,7 @@ export const F = {
   durations: "durations",
   description: "description",
   durationMinutes: "duration", // Durations collection: numeric minutes, null on some items
+  classNumber: "class", // Classes collection: "Class #" (Number, optional); sets catalog order, never served
 } as const;
 
 // A live CMS item as Webflow returns it; fieldData values stay unknown until normalizeCatalog.

@@ -44,6 +44,23 @@ describe("normalizeCatalog", () => {
     expect(out.audio.get("c1")).toEqual({ url: AUDIO, durationSec: 900 });
   });
 
+  it("classes sort by Class # descending, numerically (2, 10, 57 is not a text sort)", () => {
+    const ids = normalizeCatalog(world([cls({ class: 2 }, "a"), cls({ class: 57 }, "b"), cls({ class: 10 }, "c")])).catalog.classes.map((c) => c.id);
+    expect(ids).toEqual(["b", "c", "a"]);
+  });
+
+  it("missing, null or non-numeric Class # go after all numbered classes, in Webflow order", () => {
+    const ids = normalizeCatalog(world([
+      cls({}, "u1"), cls({ class: 3 }, "n3"), cls({ class: null }, "u2"), cls({ class: 1 }, "n1"), cls({ class: "abc" }, "u3"),
+    ])).catalog.classes.map((c) => c.id);
+    expect(ids).toEqual(["n3", "n1", "u1", "u2", "u3"]);
+  });
+
+  it("equal Class # keep Webflow order", () => {
+    const ids = normalizeCatalog(world([cls({ class: 5 }, "a"), cls({ class: 5 }, "b"), cls({ class: 9 }, "c")])).catalog.classes.map((c) => c.id);
+    expect(ids).toEqual(["c", "a", "b"]);
+  });
+
   it("duration: numeric field wins, null numeric falls back to the name, unparseable name drops the option", () => {
     expect(one({ durations: "d10" })).toMatchObject({ durationSec: 600, durationId: "d10" });
     expect(one({ durations: "d15" })).toMatchObject({ durationSec: 900, durationId: "d15" });
