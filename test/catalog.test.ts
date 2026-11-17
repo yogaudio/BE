@@ -209,7 +209,7 @@ describe("GET /catalog", () => {
   });
 
   it("a fresh cache makes no Webflow fetch", async () => {
-    await seed(60_000);
+    await seed(30_000);
     const spy = mockWebflow();
     const res = await get(await authed());
     expect(res.status).toBe(200);
@@ -217,18 +217,18 @@ describe("GET /catalog", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("a stale cache is served at once and a rebuild runs via waitUntil", async () => {
-    await seed(11 * 60_000);
+  it("a stale cache is rebuilt inline: the same request returns the fresh catalog", async () => {
+    await seed(61_000);
     const calls: string[] = [];
     mockWebflow({ calls });
-    const ctx = createExecutionContext();
-    const res = await route(new Request("https://api.test/catalog", { headers: await authed() }), env, ctx);
-    expect(((await res.json()) as any).version).toBe("seeded");
-    await waitOnExecutionContext(ctx);
+    const res = await get(await authed());
+    const body = (await res.json()) as any;
+    expect(body.version).not.toBe("seeded");
+    expect(res.headers.get("ETag")).toBe(`"${body.version}"`);
     expect(calls.length).toBeGreaterThan(0);
     const cached = (await env.CACHE.get("catalog:v2", "json")) as any;
-    expect(cached.version).not.toBe("seeded");
-    expect(Date.now() - cached.builtAt).toBeLessThan(60_000);
+    expect(cached.version).toBe(body.version);
+    expect(await env.CACHE.get("catalog:rebuilding")).toBeNull();
   });
 
   it("an empty Webflow catalog never replaces the cached entry: stale is kept and served", async () => {

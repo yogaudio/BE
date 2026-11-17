@@ -3,7 +3,7 @@ import { ApiError } from "./errors";
 import { sha256, verifyAccessToken } from "./tokens";
 import { F, loadWebflowCollections, type WebflowCollections, type WebflowRawItem } from "./webflow";
 
-const FRESH_MS = 10 * 60_000;
+const FRESH_MS = 60_000;
 const KEY = "catalog:v2";
 const LOCK = "catalog:rebuilding";
 const AUDIO_URL = /^https:\/\/media\.transistor\.fm\//;
@@ -133,23 +133,22 @@ const etagMatches = (header: string | null, version: string) =>
     return v === version || t.trim() === "*";
   });
 
-// The cached entry (building it when empty). Stale entries are served while a rebuild runs via waitUntil.
-export async function getCatalogEntry(env: Env, ctx: ExecutionContext): Promise<Entry> {
+// The cached entry (building it when empty). A stale entry is rebuilt inline so one request is enough;
+// if the rebuild fails or another request holds the lock, the stale entry is served.
+export async function getCatalogEntry(env: Env, _ctx: ExecutionContext): Promise<Entry> {
   const cached = await env.CACHE.get<Entry>(KEY, "json").catch(() => null);
-  if (cached) {
-    // stale-while-revalidate; a short KV lock keeps concurrent stale requests from all rebuilding
-    // ponytail: KV is eventually consistent, so this cuts the stampede, it does not guarantee one rebuild; rebuilds are idempotent so that is fine
-    if (Date.now() - cached.builtAt >= FRESH_MS && !(await env.CACHE.get(LOCK).catch(() => null))) {
-      await env.CACHE.put(LOCK, "1", { expirationTtl: 60 }).catch(() => {});
-      ctx.waitUntil(
-        rebuild(env)
-          .catch((e) => console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown"))
-          .finally(() => env.CACHE.delete(LOCK).catch(() => {})),
-      );
-    }
+  if (!cached) return rebuild(env);
+  if (Date.now() - cached.builtAt < FRESH_MS || (await env.CACHE.get(LOCK).catch(() => null))) return cached;
+  // ponytail: KV is eventually consistent, so the lock cuts the stampede, it does not guarantee one rebuild; rebuilds are idempotent so that is fine
+  await env.CACHE.put(LOCK, "1", { expirationTtl: 60 }).catch(() => {});
+  try {
+    return await rebuild(env);
+  } catch (e) {
+    console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown");
     return cached;
+  } finally {
+    await env.CACHE.delete(LOCK).catch(() => {});
   }
-  return rebuild(env);
 }
 
 export async function getCatalog(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
