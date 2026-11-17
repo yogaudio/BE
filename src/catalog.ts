@@ -34,7 +34,7 @@ export interface ClassAudio {
 }
 // `audio` is the server-side classId -> audio index. It lives only in this KV entry, next to the catalog it was
 // built with; only `json` is ever served by /catalog. /play reads `audio`.
-type Entry = { version: string; builtAt: number; json: string; audio: Record<string, ClassAudio> };
+export type Entry = { version: string; builtAt: number; json: string; audio: Record<string, ClassAudio> };
 
 const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -133,27 +133,37 @@ const etagMatches = (header: string | null, version: string) =>
     return v === version || t.trim() === "*";
   });
 
-// The cached entry (building it when empty). A stale entry is rebuilt inline so one request is enough;
-// if the rebuild fails or another request holds the lock, the stale entry is served.
-export async function getCatalogEntry(env: Env, _ctx: ExecutionContext): Promise<Entry> {
+// The cached entry; built inline when there is none (cold=true). Never refreshes a stale entry.
+export async function getCachedEntry(env: Env): Promise<{ entry: Entry; cold: boolean }> {
   const cached = await env.CACHE.get<Entry>(KEY, "json").catch(() => null);
-  if (!cached) return rebuild(env);
-  if (Date.now() - cached.builtAt < FRESH_MS || (await env.CACHE.get(LOCK).catch(() => null))) return cached;
-  // ponytail: KV is eventually consistent, so the lock cuts the stampede, it does not guarantee one rebuild; rebuilds are idempotent so that is fine
+  return cached ? { entry: cached, cold: false } : { entry: await rebuild(env), cold: true };
+}
+
+// Rebuild inline under the lock. If another request holds the lock or the rebuild fails, `cached` is returned.
+// The lock is released only on success; after a failure it expires by its TTL, so a failing Webflow is retried about once a minute.
+// ponytail: KV is eventually consistent, so the lock cuts the stampede, it does not guarantee one rebuild; rebuilds are idempotent so that is fine
+export async function refreshEntry(env: Env, cached: Entry): Promise<Entry> {
+  if (await env.CACHE.get(LOCK).catch(() => null)) return cached;
   await env.CACHE.put(LOCK, "1", { expirationTtl: 60 }).catch(() => {});
   try {
-    return await rebuild(env);
+    const entry = await rebuild(env);
+    await env.CACHE.delete(LOCK).catch(() => {});
+    return entry;
   } catch (e) {
     console.warn("catalog rebuild failed", e instanceof ApiError ? e.code : "unknown");
     return cached;
-  } finally {
-    await env.CACHE.delete(LOCK).catch(() => {});
   }
+}
+
+// The catalog endpoint: a stale entry is rebuilt inline so one request is enough.
+export async function getCatalogEntry(env: Env): Promise<Entry> {
+  const { entry, cold } = await getCachedEntry(env);
+  return cold || Date.now() - entry.builtAt < FRESH_MS ? entry : refreshEntry(env, entry);
 }
 
 export async function getCatalog(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   await verifyAccessToken(env, request.headers.get("Authorization"));
-  const entry = await getCatalogEntry(env, ctx);
+  const entry = await getCatalogEntry(env);
   const headers = { ETag: `"${entry.version}"`, "Cache-Control": "private, no-cache" };
   if (etagMatches(request.headers.get("If-None-Match"), entry.version)) return new Response(null, { status: 304, headers });
   return new Response(entry.json, { headers: { ...headers, "content-type": "application/json" } });
