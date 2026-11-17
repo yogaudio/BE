@@ -33,6 +33,7 @@ async function play(classId: string, who: string | null = IDS.active, token?: st
 beforeEach(async () => {
   vi.restoreAllMocks();
   await env.CACHE.delete("catalog:v2");
+  await env.CACHE.delete("catalog:rebuilding");
   for (const id of Object.values(IDS)) await env.CACHE.delete(`ms:${id}`);
 });
 
@@ -50,6 +51,30 @@ describe("GET /play/:classId", () => {
     const hosts = spy.mock.calls.map(([input]) => new URL(input instanceof Request ? input.url : String(input)).host);
     expect(hosts.length).toBeGreaterThan(0);
     expect(new Set(hosts)).toEqual(new Set(["localhost:8788"])); // allowlist: the local fake base (wrangler.toml)
+  });
+
+  it("a stale cache is served as-is: zero Webflow calls", async () => {
+    mockAll();
+    expect((await play("6ad7b26d1bf051ee351944a3")).status).toBe(200); // warm the cache
+    const e = (await env.CACHE.get("catalog:v2", "json")) as any;
+    await env.CACHE.put("catalog:v2", JSON.stringify({ ...e, builtAt: Date.now() - 11 * 60_000 }));
+    vi.restoreAllMocks();
+    const calls: string[] = [];
+    mockAll({ calls });
+    expect((await play("6ad7b26d1bf051ee351944a3")).status).toBe(200);
+    expect(calls.filter((c) => c.includes("collections"))).toHaveLength(0);
+  });
+
+  it("an unknown id triggers one inline rebuild, then 404", async () => {
+    mockAll();
+    expect((await play("6ad7b26d1bf051ee351944a3")).status).toBe(200);
+    vi.restoreAllMocks();
+    const calls: string[] = [];
+    mockAll({ calls });
+    expect((await play("nope")).status).toBe(404);
+    const wf = calls.filter((c) => c.includes("collections"));
+    expect(wf.length).toBeGreaterThan(0);
+    expect(wf.length).toBeLessThanOrEqual(4 * 2); // one rebuild: four collections, pagination at most
   });
 
   it("an inactive member is 403 membership_inactive", async () => {

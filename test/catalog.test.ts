@@ -265,6 +265,25 @@ describe("GET /catalog", () => {
     expect(await env.CACHE.get("catalog:rebuilding")).toBeNull();
   });
 
+  it("a failed rebuild keeps the lock: the next stale request makes no Webflow call", async () => {
+    await seed(11 * 60_000);
+    mockWebflow({ status: 500 });
+    expect(((await (await get(await authed())).json()) as any).version).toBe("seeded");
+    expect(await env.CACHE.get("catalog:rebuilding")).not.toBeNull();
+    vi.restoreAllMocks();
+    const calls: string[] = [];
+    mockWebflow({ calls });
+    expect(((await (await get(await authed())).json()) as any).version).toBe("seeded");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("a successful rebuild releases the lock", async () => {
+    await seed(11 * 60_000);
+    mockWebflow();
+    await get(await authed());
+    expect(await env.CACHE.get("catalog:rebuilding")).toBeNull();
+  });
+
   it("no cache plus a Webflow 500 is 502", async () => {
     mockWebflow({ status: 500 });
     const res = await get(await authed());
